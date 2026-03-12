@@ -1,0 +1,76 @@
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { Dashboard } from './Dashboard'
+import type { WeatherData, ForecastDay } from '../types'
+
+const mockCurrent: WeatherData = {
+  location: 'Atlanta, US',
+  temperature: 72,
+  feelsLike: 70,
+  humidity: 65,
+  pressure: 1015,
+  windSpeed: 12,
+  windDirection: 180,
+  uvIndex: 5,
+  visibility: 10,
+  conditions: 'Clear',
+  conditionIcon: '01d',
+  sunrise: '6:30 AM',
+  sunset: '7:45 PM',
+  lastUpdated: '12:00 PM',
+}
+
+const mockForecast: ForecastDay[] = [
+  { date: 'Thu Mar 13', tempHigh: 75, tempLow: 55, humidity: 60, conditions: 'Clear', conditionIcon: '01d' },
+  { date: 'Fri Mar 14', tempHigh: 78, tempLow: 58, humidity: 55, conditions: 'Clouds', conditionIcon: '03d' },
+  { date: 'Sat Mar 15', tempHigh: 80, tempLow: 60, humidity: 50, conditions: 'Clear', conditionIcon: '01d' },
+]
+
+describe('Dashboard', () => {
+  it('renders loading state', () => {
+    render(<Dashboard current={null} forecast={[]} isLoading={true} error={null} source={null} onRetry={vi.fn()} />)
+
+    expect(screen.getByText('Loading weather data...')).toBeInTheDocument()
+  })
+
+  it('renders error state', () => {
+    const error = { type: 'network' as const, message: 'Network error' }
+    render(<Dashboard current={null} forecast={[]} isLoading={false} error={error} source={null} onRetry={vi.fn()} />)
+
+    expect(screen.getByText('Unable to load weather data')).toBeInTheDocument()
+    expect(screen.getByText('Network error')).toBeInTheDocument()
+  })
+
+  it('renders dashboard header with location', () => {
+    render(<Dashboard current={mockCurrent} forecast={mockForecast} isLoading={false} error={null} source="open-meteo" onRetry={vi.fn()} />)
+
+    expect(screen.getByText('Weather Dashboard')).toBeInTheDocument()
+    expect(screen.getByText(/Atlanta, US/)).toBeInTheDocument()
+  })
+
+  it('renders all metric cards', () => {
+    render(<Dashboard current={mockCurrent} forecast={mockForecast} isLoading={false} error={null} source="open-meteo" onRetry={vi.fn()} />)
+
+    expect(screen.getByText('Temperature')).toBeInTheDocument()
+    expect(screen.getByText('Humidity')).toBeInTheDocument()
+    expect(screen.getByText('Wind Speed')).toBeInTheDocument()
+    expect(screen.getByText('UV Index')).toBeInTheDocument()
+  })
+
+  it('renders chart sections', () => {
+    render(<Dashboard current={mockCurrent} forecast={mockForecast} isLoading={false} error={null} source="open-meteo" onRetry={vi.fn()} />)
+
+    expect(screen.getByText('Temperature Trend')).toBeInTheDocument()
+    expect(screen.getByText('Conditions Distribution')).toBeInTheDocument()
+    expect(screen.getByText('Humidity Forecast')).toBeInTheDocument()
+  })
+
+  it('renders additional info section', () => {
+    render(<Dashboard current={mockCurrent} forecast={mockForecast} isLoading={false} error={null} source="open-meteo" onRetry={vi.fn()} />)
+
+    expect(screen.getByText('Sunrise')).toBeInTheDocument()
+    expect(screen.getByText('Sunset')).toBeInTheDocument()
+    expect(screen.getByText('Visibility')).toBeInTheDocument()
+    expect(screen.getByText('Pressure')).toBeInTheDocument()
+  })
+})

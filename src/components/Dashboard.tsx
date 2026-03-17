@@ -13,8 +13,10 @@ import {
   Filler,
 } from 'chart.js'
 import { Line, Pie, Bar } from 'react-chartjs-2'
-import type { WeatherData, ForecastDay, WeatherError, WeatherMetric, ChartData } from '../types'
+import type { WeatherData, ForecastDay, WeatherError, WeatherMetric, ChartData, City } from '../types'
 import { MetricCard } from './MetricCard'
+import { CityPicker } from './CityPicker'
+import { WeatherBackground } from './WeatherBackground'
 import './Dashboard.css'
 
 ChartJS.register(
@@ -37,9 +39,11 @@ interface DashboardProps {
   error: WeatherError | null
   source: 'open-meteo' | 'openweathermap' | null
   onRetry: () => void
+  city: City
+  onCityChange: (city: City) => void
 }
 
-export function Dashboard({ current, forecast, isLoading, error, source, onRetry }: DashboardProps) {
+export function Dashboard({ current, forecast, isLoading, error, source, onRetry, city, onCityChange }: DashboardProps) {
   const [isDark, setIsDark] = useState(() => {
     if (typeof window === 'undefined') return false
     return window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -247,8 +251,13 @@ export function Dashboard({ current, forecast, isLoading, error, source, onRetry
 
   return (
     <div className="dashboard">
+      <WeatherBackground temperature={current.temperature} conditions={current.conditions} />
+      <div className="dashboard-overlay" />
       <header className="dashboard-header">
-        <h1>Weather Dashboard</h1>
+        <div className="header-row">
+          <h1>Weather Dashboard</h1>
+          <CityPicker selectedCity={city} onCityChange={onCityChange} />
+        </div>
         <p className="dashboard-subtitle">
           {current.location} • Updated {current.lastUpdated}
           {source && <span className="data-source"> • {source === 'open-meteo' ? 'Open-Meteo' : 'OpenWeatherMap'}</span>}

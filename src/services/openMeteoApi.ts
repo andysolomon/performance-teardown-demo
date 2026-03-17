@@ -1,7 +1,5 @@
-import type { WeatherData, ForecastDay, WeatherError, WeatherErrorType } from '../types'
+import type { WeatherData, ForecastDay, WeatherError, WeatherErrorType, City } from '../types'
 
-const ATLANTA_LAT = 33.749
-const ATLANTA_LON = -84.388
 const BASE_URL = 'https://api.open-meteo.com/v1'
 
 function parseError(status: number, message?: string): WeatherError {
@@ -35,7 +33,29 @@ function getConditionFromCode(code: number): string {
     96: 'Thunderstorm',
     99: 'Thunderstorm',
   }
+
   return conditions[code] || 'Clear'
+}
+
+function formatTimeFromIso(isoDateTime: string): string {
+  const timePart = isoDateTime.split('T')[1]
+  if (!timePart) {
+    return '--'
+  }
+
+  const [hourStr, minuteStr] = timePart.split(':')
+  const hour24 = Number.parseInt(hourStr, 10)
+  const minute = Number.parseInt(minuteStr, 10)
+
+  if (Number.isNaN(hour24) || Number.isNaN(minute)) {
+    return '--'
+  }
+
+  const suffix = hour24 >= 12 ? 'PM' : 'AM'
+  const hour12 = hour24 % 12 || 12
+  const minutePadded = String(minute).padStart(2, '0')
+
+  return `${hour12}:${minutePadded} ${suffix}`
 }
 
 interface OpenMeteoResponse {
@@ -51,13 +71,16 @@ interface OpenMeteoResponse {
     temperature_2m_max: number[]
     temperature_2m_min: number[]
     weather_code: number[]
+    relative_humidity_2m_mean: number[]
+    sunrise: string[]
+    sunset: string[]
   }
   timezone: string
 }
 
-export async function fetchOpenMeteoWeather(): Promise<{ current: WeatherData; forecast: ForecastDay[] }> {
+export async function fetchOpenMeteoWeather(city: City): Promise<{ current: WeatherData; forecast: ForecastDay[] }> {
   try {
-    const url = `${BASE_URL}/forecast?latitude=${ATLANTA_LAT}&longitude=${ATLANTA_LON}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,pressure_msl&daily=weather_code,temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FNew_York`
+    const url = `${BASE_URL}/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,pressure_msl&daily=weather_code,temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,sunrise,sunset&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`
 
     const response = await fetch(url)
 
@@ -70,7 +93,7 @@ export async function fetchOpenMeteoWeather(): Promise<{ current: WeatherData; f
     const uvIndex = Math.round((Math.random() * 10 + 1) * 10) / 10
 
     const current: WeatherData = {
-      location: 'Atlanta, US',
+      location: `${city.name}, ${city.country}`,
       temperature: Math.round(data.current.temperature_2m),
       feelsLike: Math.round(data.current.temperature_2m),
       humidity: data.current.relative_humidity_2m,
@@ -81,8 +104,8 @@ export async function fetchOpenMeteoWeather(): Promise<{ current: WeatherData; f
       visibility: 10,
       conditions: getConditionFromCode(data.current.weather_code),
       conditionIcon: '01d',
-      sunrise: '6:30 AM',
-      sunset: '7:45 PM',
+      sunrise: formatTimeFromIso(data.daily.sunrise[0] || ''),
+      sunset: formatTimeFromIso(data.daily.sunset[0] || ''),
       lastUpdated: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
     }
 
@@ -90,7 +113,7 @@ export async function fetchOpenMeteoWeather(): Promise<{ current: WeatherData; f
       date: new Date(dateStr).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
       tempHigh: Math.round(data.daily.temperature_2m_max[i]),
       tempLow: Math.round(data.daily.temperature_2m_min[i]),
-      humidity: 50,
+      humidity: Math.round(data.daily.relative_humidity_2m_mean[i]),
       conditions: getConditionFromCode(data.daily.weather_code[i]),
       conditionIcon: '01d',
     }))
@@ -100,9 +123,11 @@ export async function fetchOpenMeteoWeather(): Promise<{ current: WeatherData; f
     if ((error as WeatherError).type) {
       throw error
     }
+
     if (error instanceof TypeError && error.message.includes('fetch')) {
       throw { type: 'network' as WeatherErrorType, message: 'Network error. Please check your connection.' }
     }
+
     throw { type: 'unknown' as WeatherErrorType, message: 'An unexpected error occurred.' }
   }
 }

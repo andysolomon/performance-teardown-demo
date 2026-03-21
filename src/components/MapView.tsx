@@ -31,6 +31,8 @@ export function MapView({ selectedCityId }: MapViewProps) {
 
   const handleMapLoad = useCallback((event: { target: mapboxgl.Map }) => {
     const map = event.target
+
+    // Ocean water
     map.setPaintProperty('water', 'fill-color', [
       'interpolate',
       ['linear'],
@@ -39,6 +41,53 @@ export function MapView({ selectedCityId }: MapViewProps) {
       4, '#2563a8',
       8, '#3b82d4',
     ])
+
+    // Land fill
+    map.setPaintProperty('land', 'background-color', '#f5efe6')
+
+    // Landcover (forests, grass, etc.)
+    if (map.getLayer('landcover')) {
+      map.setPaintProperty('landcover', 'fill-color', [
+        'match',
+        ['get', 'class'],
+        'wood', '#c8dbb0',
+        'scrub', '#d4dfc4',
+        'grass', '#d8e4c8',
+        'crop', '#e6deb8',
+        'snow', '#f0f0f8',
+        '#e8e0d0',
+      ])
+      map.setPaintProperty('landcover', 'fill-opacity', 0.6)
+    }
+
+    // Country boundaries
+    if (map.getLayer('admin-0-boundary')) {
+      map.setPaintProperty('admin-0-boundary', 'line-color', '#8b7355')
+      map.setPaintProperty('admin-0-boundary', 'line-width', [
+        'interpolate', ['linear'], ['zoom'],
+        0, 0.8,
+        4, 1.5,
+        8, 2,
+      ])
+    }
+
+    // State/province boundaries
+    if (map.getLayer('admin-1-boundary')) {
+      map.setPaintProperty('admin-1-boundary', 'line-color', '#b8a88a')
+      map.setPaintProperty('admin-1-boundary', 'line-width', [
+        'interpolate', ['linear'], ['zoom'],
+        0, 0.3,
+        4, 0.6,
+        8, 1,
+      ])
+      map.setPaintProperty('admin-1-boundary', 'line-dasharray', [3, 2])
+    }
+
+    // National parks
+    if (map.getLayer('national-park')) {
+      map.setPaintProperty('national-park', 'fill-color', '#a8d5a2')
+      map.setPaintProperty('national-park', 'fill-opacity', 0.5)
+    }
   }, [])
 
   const handleCityClick = (city: City) => {

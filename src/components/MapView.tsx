@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useCallback } from 'react'
 import Map, { Marker } from 'react-map-gl/mapbox'
 import { useNavigate } from 'react-router-dom'
 import 'mapbox-gl/dist/mapbox-gl.css'
@@ -28,6 +28,18 @@ export function MapView({ selectedCityId }: MapViewProps) {
   const [mapError, setMapError] = useState<string | null>(null)
 
   const mapboxToken = useMemo(() => getMapboxToken(), [])
+
+  const handleMapLoad = useCallback((event: { target: mapboxgl.Map }) => {
+    const map = event.target
+    map.setPaintProperty('water', 'fill-color', [
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      0, '#1a3c6e',
+      4, '#2563a8',
+      8, '#3b82d4',
+    ])
+  }, [])
 
   const handleCityClick = (city: City) => {
     navigate(`/?city=${city.id}`)
@@ -90,6 +102,7 @@ export function MapView({ selectedCityId }: MapViewProps) {
         mapboxAccessToken={mapboxToken}
         initialViewState={INITIAL_VIEW_STATE}
         mapStyle="mapbox://styles/mapbox/light-v11"
+        onLoad={handleMapLoad}
         onClick={handleMapClick}
         onError={handleMapError}
         attributionControl={false}

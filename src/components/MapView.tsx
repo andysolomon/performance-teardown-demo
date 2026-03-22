@@ -2,7 +2,7 @@ import { useMemo, useState, useCallback } from 'react'
 import Map, { Marker } from 'react-map-gl/mapbox'
 import { useNavigate } from 'react-router-dom'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { CITIES, type City } from '../types'
+import { CITIES_FOR_MARKERS, type City } from '../types'
 import './MapView.css'
 
 const INITIAL_VIEW_STATE = {
@@ -13,6 +13,7 @@ const INITIAL_VIEW_STATE = {
 
 interface MapViewProps {
   selectedCityId: string | null
+  registerMarkerRef: (cityId: string, node: HTMLDivElement | null) => void
 }
 
 function getMapboxToken(): string {
@@ -23,7 +24,7 @@ function getMapboxToken(): string {
   return token || ''
 }
 
-export function MapView({ selectedCityId }: MapViewProps) {
+export function MapView({ selectedCityId, registerMarkerRef }: MapViewProps) {
   const navigate = useNavigate()
   const [mapError, setMapError] = useState<string | null>(null)
 
@@ -156,7 +157,7 @@ export function MapView({ selectedCityId }: MapViewProps) {
         onError={handleMapError}
         attributionControl={false}
       >
-        {CITIES.map((city) => (
+        {CITIES_FOR_MARKERS.map((city) => (
           <Marker
             key={city.id}
             longitude={city.lon}
@@ -167,6 +168,7 @@ export function MapView({ selectedCityId }: MapViewProps) {
               city={city}
               isSelected={selectedCityId === city.id}
               onClick={() => handleCityClick(city)}
+              markerRef={(node) => registerMarkerRef(city.id, node)}
             />
           </Marker>
         ))}
@@ -179,15 +181,27 @@ interface CityMarkerProps {
   city: City
   isSelected: boolean
   onClick: () => void
+  markerRef: (node: HTMLDivElement | null) => void
 }
 
-function CityMarker({ city, isSelected, onClick }: CityMarkerProps) {
+function CityMarker({ city, isSelected, onClick, markerRef }: CityMarkerProps) {
   return (
     <div
+      ref={markerRef}
       className={`map-marker ${isSelected ? 'selected' : ''}`}
+      role="button"
+      tabIndex={0}
+      aria-label={city.name}
       onClick={(e) => {
         e.stopPropagation()
         onClick()
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          e.stopPropagation()
+          onClick()
+        }
       }}
     >
       <div className="marker-dot">

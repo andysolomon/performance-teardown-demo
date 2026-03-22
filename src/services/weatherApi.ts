@@ -1,9 +1,8 @@
-import type { WeatherData, ForecastDay, WeatherError, WeatherErrorType } from '../types'
+import type { WeatherData, ForecastDay, WeatherError, WeatherErrorType, City } from '../types'
 import { fetchOpenMeteoWeather } from './openMeteoApi'
 
 const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY
 const BASE_URL = 'https://api.openweathermap.org/data/2.5'
-const LOCATION = 'Atlanta,GA,US'
 
 function parseError(status: number, message?: string): WeatherError {
   if (status === 401) {
@@ -48,13 +47,13 @@ interface ForecastResponse {
   city: { name: string; country: string; sunrise: number; sunset: number; timezone: number }
 }
 
-async function fetchOpenWeatherMapData(): Promise<{ current: WeatherData; forecast: ForecastDay[] }> {
+async function fetchOpenWeatherMapData(city: City): Promise<{ current: WeatherData; forecast: ForecastDay[] }> {
   if (!API_KEY) {
     throw { type: 'invalid_key' as WeatherErrorType, message: 'OpenWeatherMap API key not configured.' }
   }
 
-  const currentUrl = `${BASE_URL}/weather?q=${encodeURIComponent(LOCATION)}&units=imperial&appid=${API_KEY}`
-  const forecastUrl = `${BASE_URL}/forecast?q=${encodeURIComponent(LOCATION)}&units=imperial&appid=${API_KEY}`
+  const currentUrl = `${BASE_URL}/weather?q=${encodeURIComponent(city.openWeatherQuery)}&units=imperial&appid=${API_KEY}`
+  const forecastUrl = `${BASE_URL}/forecast?q=${encodeURIComponent(city.openWeatherQuery)}&units=imperial&appid=${API_KEY}`
 
   const [currentRes, forecastRes] = await Promise.all([fetch(currentUrl), fetch(forecastUrl)])
 
@@ -71,8 +70,6 @@ async function fetchOpenWeatherMapData(): Promise<{ current: WeatherData; foreca
   const currentData: CurrentWeatherResponse = await currentRes.json()
   const forecastData: ForecastResponse = await forecastRes.json()
 
-  const uvIndex = Math.round((Math.random() * 10 + 1) * 10) / 10
-
   const current: WeatherData = {
     location: `${currentData.name}, ${currentData.sys.country}`,
     temperature: Math.round(currentData.main.temp),
@@ -81,7 +78,6 @@ async function fetchOpenWeatherMapData(): Promise<{ current: WeatherData; foreca
     pressure: currentData.main.pressure,
     windSpeed: Math.round(currentData.wind.speed),
     windDirection: currentData.wind.deg,
-    uvIndex,
     visibility: Math.round(currentData.visibility / 1609),
     conditions: currentData.weather[0].main,
     conditionIcon: currentData.weather[0].icon,
@@ -121,16 +117,16 @@ export interface WeatherResult {
   source: 'open-meteo' | 'openweathermap'
 }
 
-export async function fetchWeatherData(): Promise<WeatherResult> {
+export async function fetchWeatherData(city: City): Promise<WeatherResult> {
   try {
-    const data = await fetchOpenMeteoWeather()
+    const data = await fetchOpenMeteoWeather(city)
     return { ...data, source: 'open-meteo' }
   } catch (primaryError) {
     console.warn('Open-Meteo failed, trying OpenWeatherMap fallback:', primaryError)
 
     if (API_KEY) {
       try {
-        const data = await fetchOpenWeatherMapData()
+        const data = await fetchOpenWeatherMapData(city)
         return { ...data, source: 'openweathermap' }
       } catch (fallbackError) {
         console.warn('OpenWeatherMap fallback also failed:', fallbackError)

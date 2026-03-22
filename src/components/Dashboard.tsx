@@ -116,7 +116,7 @@ export function Dashboard({ current, forecast, isLoading, error, source, onRetry
 
   const metrics: WeatherMetric[] = useMemo(() => {
     if (!current) return []
-    return [
+    const items: WeatherMetric[] = [
       {
         id: 'temperature',
         title: 'Temperature',
@@ -135,12 +135,15 @@ export function Dashboard({ current, forecast, isLoading, error, source, onRetry
         value: current.windSpeed,
         unit: 'mph',
       },
-      {
+    ]
+    if (current.uvIndex !== undefined) {
+      items.push({
         id: 'uv',
         title: 'UV Index',
         value: current.uvIndex,
-      },
-    ]
+      })
+    }
+    return items
   }, [current])
 
   const temperatureChartData: ChartData | null = useMemo(() => {

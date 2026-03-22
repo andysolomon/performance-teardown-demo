@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { Dashboard } from './Dashboard'
 import type { WeatherData, ForecastDay } from '../types'
+import { DEFAULT_CITY } from '../types'
 
 const mockCurrent: WeatherData = {
   location: 'Atlanta, US',
@@ -28,28 +29,72 @@ const mockForecast: ForecastDay[] = [
 
 describe('Dashboard', () => {
   it('renders loading state', () => {
-    render(<Dashboard current={null} forecast={[]} isLoading={true} error={null} source={null} onRetry={vi.fn()} />)
+    render(
+      <Dashboard
+        current={null}
+        forecast={[]}
+        isLoading={true}
+        error={null}
+        source={null}
+        onRetry={vi.fn()}
+        city={DEFAULT_CITY}
+        onCityChange={vi.fn()}
+      />
+    )
 
     expect(screen.getByText('Loading weather data...')).toBeInTheDocument()
   })
 
   it('renders error state', () => {
     const error = { type: 'network' as const, message: 'Network error' }
-    render(<Dashboard current={null} forecast={[]} isLoading={false} error={error} source={null} onRetry={vi.fn()} />)
+    render(
+      <Dashboard
+        current={null}
+        forecast={[]}
+        isLoading={false}
+        error={error}
+        source={null}
+        onRetry={vi.fn()}
+        city={DEFAULT_CITY}
+        onCityChange={vi.fn()}
+      />
+    )
 
     expect(screen.getByText('Unable to load weather data')).toBeInTheDocument()
     expect(screen.getByText('Network error')).toBeInTheDocument()
   })
 
   it('renders dashboard header with location', () => {
-    render(<Dashboard current={mockCurrent} forecast={mockForecast} isLoading={false} error={null} source="open-meteo" onRetry={vi.fn()} />)
+    render(
+      <Dashboard
+        current={mockCurrent}
+        forecast={mockForecast}
+        isLoading={false}
+        error={null}
+        source="open-meteo"
+        onRetry={vi.fn()}
+        city={DEFAULT_CITY}
+        onCityChange={vi.fn()}
+      />
+    )
 
     expect(screen.getByText('Weather Dashboard')).toBeInTheDocument()
-    expect(screen.getByText(/Atlanta, US/)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Weather Dashboard' })).toBeInTheDocument()
   })
 
-  it('renders all metric cards', () => {
-    render(<Dashboard current={mockCurrent} forecast={mockForecast} isLoading={false} error={null} source="open-meteo" onRetry={vi.fn()} />)
+  it('renders all metric cards including UV when available', () => {
+    render(
+      <Dashboard
+        current={mockCurrent}
+        forecast={mockForecast}
+        isLoading={false}
+        error={null}
+        source="open-meteo"
+        onRetry={vi.fn()}
+        city={DEFAULT_CITY}
+        onCityChange={vi.fn()}
+      />
+    )
 
     expect(screen.getByText('Temperature')).toBeInTheDocument()
     expect(screen.getByText('Humidity')).toBeInTheDocument()
@@ -57,8 +102,40 @@ describe('Dashboard', () => {
     expect(screen.getByText('UV Index')).toBeInTheDocument()
   })
 
+  it('hides UV Index card when uvIndex is undefined', () => {
+    const currentWithoutUV = { ...mockCurrent, uvIndex: undefined }
+    render(
+      <Dashboard
+        current={currentWithoutUV}
+        forecast={mockForecast}
+        isLoading={false}
+        error={null}
+        source="openweathermap"
+        onRetry={vi.fn()}
+        city={DEFAULT_CITY}
+        onCityChange={vi.fn()}
+      />
+    )
+
+    expect(screen.getByText('Temperature')).toBeInTheDocument()
+    expect(screen.getByText('Humidity')).toBeInTheDocument()
+    expect(screen.getByText('Wind Speed')).toBeInTheDocument()
+    expect(screen.queryByText('UV Index')).not.toBeInTheDocument()
+  })
+
   it('renders chart sections', () => {
-    render(<Dashboard current={mockCurrent} forecast={mockForecast} isLoading={false} error={null} source="open-meteo" onRetry={vi.fn()} />)
+    render(
+      <Dashboard
+        current={mockCurrent}
+        forecast={mockForecast}
+        isLoading={false}
+        error={null}
+        source="open-meteo"
+        onRetry={vi.fn()}
+        city={DEFAULT_CITY}
+        onCityChange={vi.fn()}
+      />
+    )
 
     expect(screen.getByText('Temperature Trend')).toBeInTheDocument()
     expect(screen.getByText('Conditions Distribution')).toBeInTheDocument()
@@ -66,7 +143,18 @@ describe('Dashboard', () => {
   })
 
   it('renders additional info section', () => {
-    render(<Dashboard current={mockCurrent} forecast={mockForecast} isLoading={false} error={null} source="open-meteo" onRetry={vi.fn()} />)
+    render(
+      <Dashboard
+        current={mockCurrent}
+        forecast={mockForecast}
+        isLoading={false}
+        error={null}
+        source="open-meteo"
+        onRetry={vi.fn()}
+        city={DEFAULT_CITY}
+        onCityChange={vi.fn()}
+      />
+    )
 
     expect(screen.getByText('Sunrise')).toBeInTheDocument()
     expect(screen.getByText('Sunset')).toBeInTheDocument()

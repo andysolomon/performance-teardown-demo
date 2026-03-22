@@ -65,6 +65,7 @@ interface OpenMeteoResponse {
     wind_speed_10m: number
     weather_code: number
     pressure_msl: number
+    uv_index?: number
   }
   daily: {
     time: string[]
@@ -80,7 +81,7 @@ interface OpenMeteoResponse {
 
 export async function fetchOpenMeteoWeather(city: City): Promise<{ current: WeatherData; forecast: ForecastDay[] }> {
   try {
-    const url = `${BASE_URL}/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,pressure_msl&daily=weather_code,temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,sunrise,sunset&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`
+    const url = `${BASE_URL}/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,pressure_msl,uv_index&daily=weather_code,temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,sunrise,sunset&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`
 
     const response = await fetch(url)
 
@@ -90,7 +91,7 @@ export async function fetchOpenMeteoWeather(city: City): Promise<{ current: Weat
 
     const data: OpenMeteoResponse = await response.json()
 
-    const uvIndex = Math.round((Math.random() * 10 + 1) * 10) / 10
+    const uvIndex = data.current.uv_index != null ? Math.round(data.current.uv_index * 10) / 10 : undefined
 
     const current: WeatherData = {
       location: `${city.name}, ${city.country}`,
@@ -100,7 +101,7 @@ export async function fetchOpenMeteoWeather(city: City): Promise<{ current: Weat
       pressure: Math.round(data.current.pressure_msl),
       windSpeed: Math.round(data.current.wind_speed_10m),
       windDirection: 0,
-      uvIndex,
+      ...(uvIndex !== undefined && { uvIndex }),
       visibility: 10,
       conditions: getConditionFromCode(data.current.weather_code),
       conditionIcon: '01d',

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { Dashboard } from './Dashboard'
 import type { WeatherData, ForecastDay } from '../types'
 import { DEFAULT_CITY } from '../types'
@@ -28,6 +28,10 @@ const mockForecast: ForecastDay[] = [
 ]
 
 describe('Dashboard', () => {
+  beforeEach(() => {
+    localStorage.removeItem('weather-units')
+  })
+
   it('renders loading state', () => {
     render(
       <Dashboard
@@ -160,5 +164,66 @@ describe('Dashboard', () => {
     expect(screen.getByText('Sunset')).toBeInTheDocument()
     expect(screen.getByText('Visibility')).toBeInTheDocument()
     expect(screen.getByText('Pressure')).toBeInTheDocument()
+  })
+
+  it('renders unit toggle in header', () => {
+    render(
+      <Dashboard
+        current={mockCurrent}
+        forecast={mockForecast}
+        isLoading={false}
+        error={null}
+        source="open-meteo"
+        onRetry={vi.fn()}
+        city={DEFAULT_CITY}
+        onCityChange={vi.fn()}
+      />
+    )
+
+    expect(screen.getByRole('radiogroup', { name: 'Temperature unit' })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: '°F' })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: '°C' })).toBeInTheDocument()
+  })
+
+  it('displays metric values when toggled to °C', () => {
+    render(
+      <Dashboard
+        current={mockCurrent}
+        forecast={[]}
+        isLoading={false}
+        error={null}
+        source="open-meteo"
+        onRetry={vi.fn()}
+        city={DEFAULT_CITY}
+        onCityChange={vi.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('radio', { name: '°C' }))
+
+    expect(screen.getByText('22')).toBeInTheDocument()
+    expect(screen.getByText('km/h')).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: '°C' })).toHaveAttribute('aria-checked', 'true')
+  })
+
+  it('persists metric preference in localStorage', () => {
+    localStorage.setItem('weather-units', 'metric')
+
+    render(
+      <Dashboard
+        current={mockCurrent}
+        forecast={[]}
+        isLoading={false}
+        error={null}
+        source="open-meteo"
+        onRetry={vi.fn()}
+        city={DEFAULT_CITY}
+        onCityChange={vi.fn()}
+      />
+    )
+
+    expect(screen.getByText('22')).toBeInTheDocument()
+    expect(screen.getByText('km/h')).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: '°C' })).toHaveAttribute('aria-checked', 'true')
   })
 })

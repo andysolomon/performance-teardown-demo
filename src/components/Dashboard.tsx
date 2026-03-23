@@ -16,7 +16,9 @@ import { Line, Pie, Bar } from 'react-chartjs-2'
 import type { WeatherData, ForecastDay, WeatherError, WeatherMetric, ChartData, City } from '../types'
 import { MetricCard } from './MetricCard'
 import { CityPicker } from './CityPicker'
+import { UnitToggle } from './UnitToggle'
 import { WeatherBackground } from './WeatherBackground'
+import { getStoredUnits, setStoredUnits, convertTemp, convertWindSpeed, convertVisibility, tempUnit, speedUnit, distanceUnit, type UnitSystem } from '../utils/units'
 import './Dashboard.css'
 
 ChartJS.register(
@@ -44,6 +46,13 @@ interface DashboardProps {
 }
 
 export function Dashboard({ current, forecast, isLoading, error, source, onRetry, city, onCityChange }: DashboardProps) {
+  const [units, setUnits] = useState<UnitSystem>(getStoredUnits)
+
+  const handleUnitToggle = (newUnits: UnitSystem) => {
+    setUnits(newUnits)
+    setStoredUnits(newUnits)
+  }
+
   const [isDark, setIsDark] = useState(() => {
     if (typeof window === 'undefined') return false
     return window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -120,8 +129,8 @@ export function Dashboard({ current, forecast, isLoading, error, source, onRetry
       {
         id: 'temperature',
         title: 'Temperature',
-        value: current.temperature,
-        unit: '°F',
+        value: convertTemp(current.temperature, units),
+        unit: tempUnit(units),
       },
       {
         id: 'humidity',
@@ -132,8 +141,8 @@ export function Dashboard({ current, forecast, isLoading, error, source, onRetry
       {
         id: 'wind',
         title: 'Wind Speed',
-        value: current.windSpeed,
-        unit: 'mph',
+        value: convertWindSpeed(current.windSpeed, units),
+        unit: speedUnit(units),
       },
     ]
     if (current.uvIndex !== undefined) {
@@ -144,7 +153,7 @@ export function Dashboard({ current, forecast, isLoading, error, source, onRetry
       })
     }
     return items
-  }, [current])
+  }, [current, units])
 
   const temperatureChartData: ChartData | null = useMemo(() => {
     if (forecast.length === 0) return null
@@ -152,8 +161,8 @@ export function Dashboard({ current, forecast, isLoading, error, source, onRetry
       labels: forecast.map((d) => d.date),
       datasets: [
         {
-          label: 'High',
-          data: forecast.map((d) => d.tempHigh),
+          label: `High (${tempUnit(units)})`,
+          data: forecast.map((d) => convertTemp(d.tempHigh, units)),
           backgroundColor: 'rgba(239, 68, 68, 0.1)',
           borderColor: 'rgba(239, 68, 68, 1)',
           borderWidth: 2,
@@ -161,8 +170,8 @@ export function Dashboard({ current, forecast, isLoading, error, source, onRetry
           tension: 0.4,
         },
         {
-          label: 'Low',
-          data: forecast.map((d) => d.tempLow),
+          label: `Low (${tempUnit(units)})`,
+          data: forecast.map((d) => convertTemp(d.tempLow, units)),
           backgroundColor: 'rgba(59, 130, 246, 0.1)',
           borderColor: 'rgba(59, 130, 246, 1)',
           borderWidth: 2,
@@ -171,7 +180,7 @@ export function Dashboard({ current, forecast, isLoading, error, source, onRetry
         },
       ],
     }
-  }, [forecast])
+  }, [forecast, units])
 
   const conditionsChartData: ChartData | null = useMemo(() => {
     if (forecast.length === 0) return null
@@ -259,14 +268,17 @@ export function Dashboard({ current, forecast, isLoading, error, source, onRetry
       <header className="dashboard-header">
         <div className="header-row">
           <h1>Weather Dashboard</h1>
-          <CityPicker selectedCity={city} onCityChange={onCityChange} />
+          <div className="header-controls">
+            <CityPicker selectedCity={city} onCityChange={onCityChange} />
+            <UnitToggle units={units} onToggle={handleUnitToggle} />
+          </div>
         </div>
         <p className="dashboard-subtitle">
           {current.location} • Updated {current.lastUpdated}
           {source && <span className="data-source"> • {source === 'open-meteo' ? 'Open-Meteo' : 'OpenWeatherMap'}</span>}
         </p>
         <p className="current-conditions">
-          {current.conditions} • Feels like {current.feelsLike}°F
+          {current.conditions} • Feels like {convertTemp(current.feelsLike, units)}{tempUnit(units)}
         </p>
       </header>
 
@@ -312,7 +324,7 @@ export function Dashboard({ current, forecast, isLoading, error, source, onRetry
         </div>
         <div className="info-item">
           <span className="info-label">Visibility</span>
-          <span className="info-value">{current.visibility} mi</span>
+          <span className="info-value">{convertVisibility(current.visibility, units)} {distanceUnit(units)}</span>
         </div>
         <div className="info-item">
           <span className="info-label">Pressure</span>

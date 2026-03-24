@@ -32,8 +32,8 @@ describe('Dashboard', () => {
     localStorage.removeItem('weather-units')
   })
 
-  it('renders loading state', () => {
-    render(
+  it('renders skeleton loading state', () => {
+    const { container } = render(
       <Dashboard
         current={null}
         forecast={[]}
@@ -46,7 +46,9 @@ describe('Dashboard', () => {
       />
     )
 
-    expect(screen.getByText('Loading weather data...')).toBeInTheDocument()
+    expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument()
+    expect(container.querySelectorAll('.skeleton').length).toBeGreaterThanOrEqual(10)
+    expect(screen.queryByText('Loading weather data...')).not.toBeInTheDocument()
   })
 
   it('renders error state', () => {

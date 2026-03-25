@@ -1,7 +1,7 @@
-import { useMemo, useState, useCallback } from 'react'
+import { useMemo, useState, useCallback, useRef } from 'react'
 import Map, { Marker } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { CITIES, type City } from '../types'
+import { CITIES_FOR_MARKERS, type City } from '../types'
 import './MapView.css'
 
 const INITIAL_VIEW_STATE = {
@@ -14,6 +14,7 @@ interface MapViewProps {
   selectedCityId: string | null
   onCitySelect: (cityId: string) => void
   onDeselect?: () => void
+  markerRefs?: React.MutableRefObject<Record<string, HTMLDivElement | null>>
 }
 
 function getMapboxToken(): string {
@@ -24,8 +25,10 @@ function getMapboxToken(): string {
   return token || ''
 }
 
-export function MapView({ selectedCityId, onCitySelect, onDeselect }: MapViewProps) {
+export function MapView({ selectedCityId, onCitySelect, onDeselect, markerRefs: externalRefs }: MapViewProps) {
   const [mapError, setMapError] = useState<string | null>(null)
+  const internalRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const refs = externalRefs ?? internalRefs
 
   const mapboxToken = useMemo(() => getMapboxToken(), [])
 
@@ -156,7 +159,7 @@ export function MapView({ selectedCityId, onCitySelect, onDeselect }: MapViewPro
         onError={handleMapError}
         attributionControl={false}
       >
-        {CITIES.map((city) => (
+        {CITIES_FOR_MARKERS.map((city) => (
           <Marker
             key={city.id}
             longitude={city.lon}
@@ -167,6 +170,7 @@ export function MapView({ selectedCityId, onCitySelect, onDeselect }: MapViewPro
               city={city}
               isSelected={selectedCityId === city.id}
               onClick={() => handleCityClick(city)}
+              markerRef={(el) => { refs.current[city.id] = el }}
             />
           </Marker>
         ))}
@@ -179,16 +183,30 @@ interface CityMarkerProps {
   city: City
   isSelected: boolean
   onClick: () => void
+  markerRef?: (el: HTMLDivElement | null) => void
 }
 
-function CityMarker({ city, isSelected, onClick }: CityMarkerProps) {
+function CityMarker({ city, isSelected, onClick, markerRef }: CityMarkerProps) {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      onClick()
+    }
+  }
+
   return (
     <div
+      ref={markerRef}
       className={`map-marker ${isSelected ? 'selected' : ''}`}
+      role="button"
+      tabIndex={0}
+      aria-label={`${city.name}, ${city.country}`}
+      aria-pressed={isSelected}
       onClick={(e) => {
         e.stopPropagation()
         onClick()
       }}
+      onKeyDown={handleKeyDown}
     >
       <div className="marker-dot">
         {isSelected && <div className="marker-pulse" />}

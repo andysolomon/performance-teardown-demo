@@ -61,6 +61,11 @@
   transform: scale(1.3);
 }
 
+.map-marker:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .marker-pulse {
   position: absolute;
   inset: -6px;

@@ -283,6 +283,84 @@ test.describe('Mobile Bottom Sheet', () => {
   })
 })
 
+test.describe('Keyboard Navigation', () => {
+  test('markers are focusable via Tab', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.locator('.map-container')).toBeVisible({ timeout: 10000 })
+
+    // Tab to find a marker
+    await page.keyboard.press('Tab')
+    const focused = page.locator('.map-marker:focus')
+    // May need multiple tabs to reach a marker
+    for (let i = 0; i < 15; i++) {
+      const count = await focused.count()
+      if (count > 0) break
+      await page.keyboard.press('Tab')
+    }
+  })
+
+  test('Enter key opens weather panel from focused marker', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.locator('.map-container')).toBeVisible({ timeout: 10000 })
+
+    // Focus a marker directly
+    const marker = page.locator('.map-marker').first()
+    await marker.focus()
+    await page.keyboard.press('Enter')
+
+    await expect(page.locator('.weather-panel.open')).toBeVisible({ timeout: 10000 })
+  })
+
+  test('Space key opens weather panel from focused marker', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.locator('.map-container')).toBeVisible({ timeout: 10000 })
+
+    const marker = page.locator('.map-marker').first()
+    await marker.focus()
+    await page.keyboard.press('Space')
+
+    await expect(page.locator('.weather-panel.open')).toBeVisible({ timeout: 10000 })
+  })
+
+  test('Escape key closes panel and restores focus', async ({ page }) => {
+    await page.goto('/?city=atlanta')
+    await expect(page.locator('.weather-panel.open')).toBeVisible({ timeout: 10000 })
+
+    await page.keyboard.press('Escape')
+
+    await expect(page.locator('.weather-panel.open')).not.toBeVisible({ timeout: 5000 })
+  })
+
+  test('markers have correct ARIA attributes', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.locator('.map-container')).toBeVisible({ timeout: 10000 })
+
+    // Wait for markers to render
+    await expect(page.locator('.map-marker').first()).toBeVisible({ timeout: 10000 })
+
+    const marker = page.locator('.map-marker').first()
+    await expect(marker).toHaveAttribute('role', 'button')
+    await expect(marker).toHaveAttribute('tabindex', '0')
+    await expect(marker).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  test('selected marker has aria-pressed true', async ({ page }) => {
+    await page.goto('/?city=atlanta')
+    await expect(page.locator('.weather-panel.open')).toBeVisible({ timeout: 10000 })
+
+    const atlantaMarker = page.locator('.map-marker.selected')
+    await expect(atlantaMarker).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  test('aria-live announces city selection', async ({ page }) => {
+    await page.goto('/?city=tokyo')
+    await expect(page.locator('.weather-panel.open')).toBeVisible({ timeout: 10000 })
+
+    const liveRegion = page.locator('[aria-live="polite"]')
+    await expect(liveRegion).toContainText('Tokyo selected')
+  })
+})
+
 test.describe('Desktop Drawer', () => {
   test.use({ viewport: { width: 1280, height: 800 } })
 

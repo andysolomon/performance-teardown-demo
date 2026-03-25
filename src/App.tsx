@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { Dashboard } from './components/Dashboard'
 import { MapView } from './components/MapView'
 import { WeatherPanel } from './components/WeatherPanel'
@@ -15,6 +15,9 @@ function getCityFromURL(): City | null {
 
 function App() {
   const [selectedCity, setSelectedCity] = useState<City | null>(getCityFromURL)
+  const [announcement, setAnnouncement] = useState('')
+  const markerRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const lastSelectedRef = useRef<string | null>(null)
   const activeCity = selectedCity ?? DEFAULT_CITY
   const { current, forecast, isLoading, error, source, refetch } = useWeather(activeCity)
 
@@ -31,6 +34,29 @@ function App() {
     window.history.pushState({}, '', url)
   }, [])
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && selectedCity) {
+        const cityId = selectedCity.id
+        selectCity(null)
+        requestAnimationFrame(() => {
+          markerRefs.current[cityId]?.focus()
+        })
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedCity, selectCity])
+
+  useEffect(() => {
+    if (selectedCity) {
+      setAnnouncement(`${selectedCity.name} selected, weather panel opened`)
+      lastSelectedRef.current = selectedCity.id
+    } else {
+      setAnnouncement('')
+    }
+  }, [selectedCity])
+
   const handleCitySelect = useCallback((cityId: string) => {
     const city = CITIES.find((c) => c.id === cityId)
     if (city) selectCity(city)
@@ -46,6 +72,7 @@ function App() {
         selectedCityId={selectedCity?.id ?? null}
         onCitySelect={handleCitySelect}
         onDeselect={handlePanelClose}
+        markerRefs={markerRefs}
       />
       <WeatherPanel isOpen={selectedCity !== null} onClose={handlePanelClose} cityName={selectedCity?.name}>
         <Dashboard
@@ -59,6 +86,9 @@ function App() {
           onCityChange={(city) => selectCity(city)}
         />
       </WeatherPanel>
+      <div className="sr-only" aria-live="polite" role="status">
+        {announcement}
+      </div>
     </>
   )
 }

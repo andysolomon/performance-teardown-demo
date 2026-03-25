@@ -2,14 +2,14 @@ import type { WeatherData, ForecastDay, WeatherError, WeatherErrorType, City } f
 
 const BASE_URL = 'https://api.open-meteo.com/v1'
 
-function parseError(status: number, message?: string): WeatherError {
+export function parseError(status: number, message?: string): WeatherError {
   if (status >= 500) {
     return { type: 'network', message: 'Server error. Please try again later.' }
   }
   return { type: 'unknown', message: message || 'An unexpected error occurred.' }
 }
 
-function getConditionFromCode(code: number): string {
+export function getConditionFromCode(code: number): string {
   const conditions: Record<number, string> = {
     0: 'Clear',
     1: 'Clear',
@@ -37,7 +37,7 @@ function getConditionFromCode(code: number): string {
   return conditions[code] || 'Clear'
 }
 
-function formatTimeFromIso(isoDateTime: string): string {
+export function formatTimeFromIso(isoDateTime: string): string {
   const timePart = isoDateTime.split('T')[1]
   if (!timePart) {
     return '--'

@@ -4,7 +4,7 @@ import { fetchOpenMeteoWeather } from './openMeteoApi'
 const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY
 const BASE_URL = 'https://api.openweathermap.org/data/2.5'
 
-function parseError(status: number, message?: string): WeatherError {
+export function parseError(status: number, message?: string): WeatherError {
   if (status === 401) {
     return { type: 'invalid_key', message: 'Invalid API key. Please check your configuration.' }
   }

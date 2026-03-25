@@ -1,0 +1,130 @@
+.weather-panel-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.weather-panel-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.weather-panel {
+  position: fixed;
+  z-index: 101;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
+}
+
+.weather-panel.dragging {
+  transition: none;
+}
+
+.weather-panel-handle {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 4px;
+  cursor: grab;
+  touch-action: none;
+  flex-shrink: 0;
+}
+
+.weather-panel-handle:active {
+  cursor: grabbing;
+}
+
+.weather-panel-pill {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+}
+
+.weather-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 20px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.weather-panel-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.weather-panel-close {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 18px;
+  transition: background 0.15s;
+}
+
+.weather-panel-close:hover {
+  background: var(--accent-bg);
+}
+
+.weather-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Desktop: right-side drawer */
+@media (min-width: 769px) {
+  .weather-panel {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 420px;
+    max-width: 90vw;
+    transform: translateX(100%);
+    border-left: 1px solid var(--border);
+  }
+
+  .weather-panel.open {
+    transform: translateX(0);
+  }
+
+  .weather-panel-handle {
+    display: none;
+  }
+}
+
+/* Mobile: bottom sheet */
+@media (max-width: 768px) {
+  .weather-panel {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 50vh;
+    border-radius: 16px 16px 0 0;
+    transform: translateY(100%);
+  }
+
+  .weather-panel.open {
+    transform: translateY(0);
+  }
+
+  .weather-panel.expanded {
+    height: 100vh;
+  }
+}

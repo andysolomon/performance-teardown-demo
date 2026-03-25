@@ -17,7 +17,6 @@ import type { WeatherData, ForecastDay, WeatherError, WeatherMetric, ChartData, 
 import { MetricCard } from './MetricCard'
 import { CityPicker } from './CityPicker'
 import { UnitToggle } from './UnitToggle'
-import { WeatherBackground } from './WeatherBackground'
 import { getStoredUnits, setStoredUnits, convertTemp, convertWindSpeed, convertVisibility, tempUnit, speedUnit, distanceUnit, type UnitSystem } from '../utils/units'
 import './Dashboard.css'
 
@@ -286,11 +285,8 @@ export function Dashboard({ current, forecast, isLoading, error, source, onRetry
 
   return (
     <div className="dashboard">
-      <WeatherBackground temperature={current.temperature} conditions={current.conditions} />
-      <div className="dashboard-overlay" />
       <header className="dashboard-header">
         <div className="header-row">
-          <h1>Weather Dashboard</h1>
           <div className="header-controls">
             <CityPicker selectedCity={city} onCityChange={onCityChange} />
             <UnitToggle units={units} onToggle={handleUnitToggle} />

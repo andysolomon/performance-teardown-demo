@@ -1,2 +1,4 @@
 @import './components/Dashboard.css';
 @import './components/MetricCard.css';
+@import './components/MapView.css';
+@import './components/WeatherPanel.css';

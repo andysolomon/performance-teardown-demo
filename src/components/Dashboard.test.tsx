@@ -84,8 +84,9 @@ describe('Dashboard', () => {
       />
     )
 
-    expect(screen.getByText('Weather Dashboard')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Weather Dashboard' })).toBeInTheDocument()
+    const subtitle = screen.getByText(/Updated/)
+    expect(subtitle).toBeInTheDocument()
+    expect(subtitle.textContent).toContain('Atlanta, US')
   })
 
   it('renders all metric cards including UV when available', () => {

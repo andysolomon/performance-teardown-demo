@@ -1,6 +1,5 @@
 import { useMemo, useState, useCallback } from 'react'
 import Map, { Marker } from 'react-map-gl/mapbox'
-import { useNavigate } from 'react-router-dom'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { CITIES, type City } from '../types'
 import './MapView.css'
@@ -13,6 +12,8 @@ const INITIAL_VIEW_STATE = {
 
 interface MapViewProps {
   selectedCityId: string | null
+  onCitySelect: (cityId: string) => void
+  onDeselect?: () => void
 }
 
 function getMapboxToken(): string {
@@ -23,8 +24,7 @@ function getMapboxToken(): string {
   return token || ''
 }
 
-export function MapView({ selectedCityId }: MapViewProps) {
-  const navigate = useNavigate()
+export function MapView({ selectedCityId, onCitySelect, onDeselect }: MapViewProps) {
   const [mapError, setMapError] = useState<string | null>(null)
 
   const mapboxToken = useMemo(() => getMapboxToken(), [])
@@ -91,12 +91,12 @@ export function MapView({ selectedCityId }: MapViewProps) {
   }, [])
 
   const handleCityClick = (city: City) => {
-    navigate(`/?city=${city.id}`)
+    onCitySelect(city.id)
   }
 
   const handleMapClick = () => {
-    if (selectedCityId) {
-      navigate('/')
+    if (selectedCityId && onDeselect) {
+      onDeselect()
     }
   }
 

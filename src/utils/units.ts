@@ -6,14 +6,14 @@ export function getStoredUnits(): UnitSystem {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored === 'metric' || stored === 'imperial') return stored
-  } catch {}
+  } catch { /* localStorage unavailable */ }
   return 'imperial'
 }
 
 export function setStoredUnits(units: UnitSystem): void {
   try {
     localStorage.setItem(STORAGE_KEY, units)
-  } catch {}
+  } catch { /* localStorage unavailable */ }
 }
 
 export function convertTemp(fahrenheit: number, units: UnitSystem): number {

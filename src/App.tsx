@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { Dashboard } from './components/Dashboard'
 import { MapView } from './components/MapView'
 import { WeatherPanel } from './components/WeatherPanel'
@@ -15,7 +15,7 @@ function getCityFromURL(): City | null {
 
 function App() {
   const [selectedCity, setSelectedCity] = useState<City | null>(getCityFromURL)
-  const [announcement, setAnnouncement] = useState('')
+  const announcement = useMemo(() => selectedCity ? `${selectedCity.name} selected, weather panel opened` : '', [selectedCity])
   const markerRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const lastSelectedRef = useRef<string | null>(null)
   const activeCity = selectedCity ?? DEFAULT_CITY
@@ -50,10 +50,7 @@ function App() {
 
   useEffect(() => {
     if (selectedCity) {
-      setAnnouncement(`${selectedCity.name} selected, weather panel opened`)
       lastSelectedRef.current = selectedCity.id
-    } else {
-      setAnnouncement('')
     }
   }, [selectedCity])
 

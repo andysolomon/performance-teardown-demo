@@ -26,9 +26,10 @@ export function WeatherPanel({ isOpen, onClose, cityName, children }: WeatherPan
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  // Reset state when panel closes
+  // Reset state when panel closes — syncing internal state to the isOpen prop
   useEffect(() => {
     if (!isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional reset on prop change
       setExpanded(false)
       setTranslateY(0)
       setDragging(false)

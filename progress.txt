@@ -1,23 +1,29 @@
 Project: performance-teardown-demo
-Status: IN PROGRESS
+Status: COMPLETE
 
-Last Updated: 2026-03-12 15:21 EDT
+Last Updated: 2026-03-12 15:48 EDT
 
 Milestones
 [x] M1 - Project scaffold (Vite + React + TS)
-[ ] M2 - Feature implementation
-[ ] M3 - Quality checks (lint/typecheck/tests)
-[ ] M4 - Vercel deploy
-[ ] M5 - Portfolio case-study update
+[x] M2 - Feature implementation
+[x] M3 - Quality checks (lint/typecheck/tests)
+[x] M4 - Vercel deploy
+[x] M5 - Portfolio case-study update
 
 Current Task
-- Define feature scope and begin implementation.
+- Project complete.
 
 Blockers
 - [NONE]
 
 Notes
-- Keep claims factual and measurable.
+- Live URL: https://performance-teardown-demo.vercel.app
+- Case Study: CASE_STUDY.md
+- Tests: 6 passing (Vitest + React Testing Library)
+- Bundle: 127.17 KB gzipped
 
 Change Log
+- [2026-03-12 15:48 EDT] Created CASE_STUDY.md for portfolio use. All milestones complete.
+- [2026-03-12 15:46 EDT] Deployed to Vercel (production).
+- [2026-03-12 15:45 EDT] Completed M2 and M3 - Dashboard with Chart.js, Vitest tests passing.
 - [2026-03-12 15:21 EDT] Scaffolded repository and initialized tracker.

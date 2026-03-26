@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { fetchWeatherData, type WeatherResult } from '../services/weatherApi'
-import type { WeatherData, ForecastDay, WeatherError } from '../types'
+import type { WeatherData, ForecastDay, WeatherError, City } from '../types'
 
 const REFRESH_INTERVAL = 10 * 60 * 1000
 
@@ -13,19 +13,20 @@ interface UseWeatherResult {
   refetch: () => Promise<void>
 }
 
-export function useWeather(): UseWeatherResult {
+export function useWeather(city: City): UseWeatherResult {
   const [current, setCurrent] = useState<WeatherData | null>(null)
   const [forecast, setForecast] = useState<ForecastDay[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<WeatherError | null>(null)
   const [source, setSource] = useState<'open-meteo' | 'openweathermap' | null>(null)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const fetchData = useCallback(async () => {
     setIsLoading(true)
     setError(null)
 
     try {
-      const data: WeatherResult = await fetchWeatherData()
+      const data: WeatherResult = await fetchWeatherData(city)
       setCurrent(data.current)
       setForecast(data.forecast)
       setSource(data.source)
@@ -35,14 +36,22 @@ export function useWeather(): UseWeatherResult {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [city])
 
   useEffect(() => {
     fetchData()
 
-    const intervalId = setInterval(fetchData, REFRESH_INTERVAL)
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+    }
 
-    return () => clearInterval(intervalId)
+    intervalRef.current = setInterval(fetchData, REFRESH_INTERVAL)
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
+    }
   }, [fetchData])
 
   return { current, forecast, isLoading, error, source, refetch: fetchData }

@@ -1,0 +1,47 @@
+.city-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.city-picker-label {
+  font-size: 14px;
+  color: #6b6375;
+}
+
+.city-picker-select {
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #e5e4e7;
+  border-radius: 8px;
+  background-color: #fff;
+  color: #2d2b32;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.city-picker-select:hover {
+  border-color: #9ca3af;
+}
+
+.city-picker-select:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  .city-picker-label {
+    color: #9ca3af;
+  }
+
+  .city-picker-select {
+    background-color: #1e2028;
+    border-color: #2e303a;
+    color: #f4f4f5;
+  }
+
+  .city-picker-select:hover {
+    border-color: #4b5563;
+  }
+}

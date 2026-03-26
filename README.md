@@ -1,73 +1,112 @@
-# React + TypeScript + Vite
+# Weather Teardown
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An interactive weather dashboard built with React 19 and Mapbox GL. Select cities on a full-screen globe, view real-time weather conditions, and explore 5-day forecasts — all in a responsive, accessible interface.
 
-Currently, two official plugins are available:
+<!-- TODO: Replace with actual screenshot once captured -->
+![App screenshot](docs/screenshot.png)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+**[Live Demo →](https://performance-teardown-demo.vercel.app)**
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- 🌍 **Interactive Mapbox globe** — full-screen map with custom-styled land, water, and boundaries
+- 📍 **10 city markers** — keyboard-navigable pins with pulse animation on selection
+- 🌤️ **Real-time weather** — current conditions via Open-Meteo (free, no key required)
+- 📊 **5-day forecast charts** — temperature trends and daily breakdowns with Chart.js
+- 🌡️ **Unit toggle** — switch between °F/°C and mph/km/h
+- 📱 **Responsive bottom sheet** — swipe-to-dismiss panel on mobile with touch gestures
+- ♿ **Accessible** — ARIA labels, keyboard navigation, focus management, live regions
+- 🔗 **URL sync** — shareable city links via `?city=<id>` query params
+- 🔄 **Offline fallback** — graceful degradation with mock data when APIs are unavailable
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+| Layer | Technology |
+|-------|-----------|
+| Framework | React 19 + TypeScript 5.9 |
+| Build | Vite 8 |
+| Map | Mapbox GL JS 3 + react-map-gl 8 |
+| Charts | Chart.js 4.5 + react-chartjs-2 |
+| Routing | react-router-dom 7 |
+| Unit Tests | Vitest 4 + React Testing Library 16 |
+| E2E Tests | Playwright 1.58 |
+| CI | GitHub Actions |
+| Deployment | Vercel |
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Getting Started
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Prerequisites
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Node.js 20+
+- A [Mapbox](https://www.mapbox.com/) access token (free tier available)
+
+### Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/andysolomon/performance-teardown-demo.git
+cd performance-teardown-demo
+
+# Copy environment variables
+cp .env.example .env
+
+# Add your Mapbox token to .env (see Environment Variables below)
+
+# Install dependencies
+npm install
+
+# Start the dev server
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The app will be available at `http://localhost:5173`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Environment Variables
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `VITE_MAPBOX_TOKEN` | **Yes** | Mapbox GL access token. [Create a free account →](https://account.mapbox.com/auth/signup/) |
+| `VITE_OPENWEATHER_API_KEY` | No | OpenWeatherMap API key. The app uses Open-Meteo by default (no key needed) and falls back to mock data if unavailable. |
+
+## Available Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start Vite dev server with HMR |
+| `npm run build` | Type-check and build for production |
+| `npm run preview` | Preview production build locally |
+| `npm run lint` | Run ESLint |
+| `npm run test` | Run unit tests in watch mode |
+| `npm run test:run` | Run unit tests once (CI) |
+| `npm run test:e2e` | Run Playwright E2E tests |
+| `npm run test:e2e:ui` | Open Playwright UI mode |
+
+## Project Structure
+
 ```
+src/
+├── components/       # React components (Dashboard, MapView, WeatherPanel, etc.)
+├── hooks/            # Custom hooks (useWeather)
+├── services/         # Weather API adapters (Open-Meteo, OpenWeatherMap)
+├── types/            # TypeScript types and city data
+├── utils/            # Unit conversion helpers
+├── App.tsx           # Root component with city selection + URL sync
+└── main.tsx          # Entry point
+e2e/                  # Playwright E2E tests
+.github/workflows/    # CI pipeline (lint, typecheck, test, build)
+```
+
+## Deployment
+
+The app is deployed on [Vercel](https://vercel.com). Any push to `main` triggers an automatic deployment.
+
+To deploy your own instance:
+
+1. Fork this repository
+2. Import the project in the [Vercel dashboard](https://vercel.com/new)
+3. Add `VITE_MAPBOX_TOKEN` to the project's environment variables
+4. Deploy
+
+## License
+
+MIT

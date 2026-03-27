@@ -297,7 +297,7 @@ export function Dashboard({ current, forecast, isLoading, error, source, onRetry
           {source && <span className="data-source"> • {source === 'open-meteo' ? 'Open-Meteo' : 'OpenWeatherMap'}</span>}
         </p>
         <p className="current-conditions">
-          {current.conditions} • Feels like {convertTemp(current.feelsLike, units)}{tempUnit(units)}
+          {current.conditions}{current.feelsLike != null ? ` • Feels like ${convertTemp(current.feelsLike, units)}${tempUnit(units)}` : ''}
         </p>
       </header>
 
@@ -343,7 +343,7 @@ export function Dashboard({ current, forecast, isLoading, error, source, onRetry
         </div>
         <div className="info-item">
           <span className="info-label">Visibility</span>
-          <span className="info-value">{convertVisibility(current.visibility, units)} {distanceUnit(units)}</span>
+          <span className="info-value">{current.visibility != null ? `${convertVisibility(current.visibility, units)} ${distanceUnit(units)}` : 'Unavailable'}</span>
         </div>
         <div className="info-item">
           <span className="info-label">Pressure</span>

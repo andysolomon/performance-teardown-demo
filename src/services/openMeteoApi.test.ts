@@ -169,6 +169,28 @@ describe('fetchOpenMeteoWeather', () => {
     expect(result.current.uvIndex).toBeUndefined()
   })
 
+  it('rejects when signal is already aborted', async () => {
+    const controller = new AbortController()
+    controller.abort()
+
+    await expect(fetchOpenMeteoWeather(testCity, controller.signal)).rejects.toBeDefined()
+  })
+
+  it('passes signal to fetch', async () => {
+    const controller = new AbortController()
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockOpenMeteoResponse),
+    })
+
+    await fetchOpenMeteoWeather(testCity, controller.signal)
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ signal: controller.signal }),
+    )
+  })
+
   it('does not call Math.random', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,

@@ -72,6 +72,15 @@ describe('fetchWeatherData', () => {
     expect(result.source).toBe('open-meteo')
   })
 
+  it('forwards signal to fetchOpenMeteoWeather', async () => {
+    const controller = new AbortController()
+    mockedFetchOpenMeteo.mockResolvedValue(mockWeatherResult)
+
+    await fetchWeatherData(testCity, controller.signal)
+
+    expect(mockedFetchOpenMeteo).toHaveBeenCalledWith(testCity, controller.signal)
+  })
+
   it('throws when primary fails and fallback also fails', async () => {
     const primaryError = { type: 'network' as const, message: 'Server error. Please try again later.' }
     mockedFetchOpenMeteo.mockRejectedValue(primaryError)

@@ -82,11 +82,11 @@ interface OpenMeteoResponse {
   timezone: string
 }
 
-export async function fetchOpenMeteoWeather(city: City): Promise<{ current: WeatherData; forecast: ForecastDay[] }> {
+export async function fetchOpenMeteoWeather(city: City, signal?: AbortSignal): Promise<{ current: WeatherData; forecast: ForecastDay[] }> {
   try {
     const url = `${BASE_URL}/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,pressure_msl,apparent_temperature,wind_direction_10m,visibility,uv_index&daily=weather_code,temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,sunrise,sunset&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`
 
-    const response = await fetch(url)
+    const response = await fetch(url, { signal })
 
     if (!response.ok) {
       throw parseError(response.status)

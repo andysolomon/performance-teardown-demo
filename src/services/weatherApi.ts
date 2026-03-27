@@ -47,7 +47,7 @@ interface ForecastResponse {
   city: { name: string; country: string; sunrise: number; sunset: number; timezone: number }
 }
 
-async function fetchOpenWeatherMapData(city: City): Promise<{ current: WeatherData; forecast: ForecastDay[] }> {
+async function fetchOpenWeatherMapData(city: City, signal?: AbortSignal): Promise<{ current: WeatherData; forecast: ForecastDay[] }> {
   if (!API_KEY) {
     throw { type: 'invalid_key' as WeatherErrorType, message: 'OpenWeatherMap API key not configured.' }
   }
@@ -55,7 +55,7 @@ async function fetchOpenWeatherMapData(city: City): Promise<{ current: WeatherDa
   const currentUrl = `${BASE_URL}/weather?q=${encodeURIComponent(city.openWeatherQuery)}&units=imperial&appid=${API_KEY}`
   const forecastUrl = `${BASE_URL}/forecast?q=${encodeURIComponent(city.openWeatherQuery)}&units=imperial&appid=${API_KEY}`
 
-  const [currentRes, forecastRes] = await Promise.all([fetch(currentUrl), fetch(forecastUrl)])
+  const [currentRes, forecastRes] = await Promise.all([fetch(currentUrl, { signal }), fetch(forecastUrl, { signal })])
 
   if (!currentRes.ok) {
     const errorData = await currentRes.json().catch(() => ({}))
@@ -117,16 +117,16 @@ export interface WeatherResult {
   source: 'open-meteo' | 'openweathermap'
 }
 
-export async function fetchWeatherData(city: City): Promise<WeatherResult> {
+export async function fetchWeatherData(city: City, signal?: AbortSignal): Promise<WeatherResult> {
   try {
-    const data = await fetchOpenMeteoWeather(city)
+    const data = await fetchOpenMeteoWeather(city, signal)
     return { ...data, source: 'open-meteo' }
   } catch (primaryError) {
     console.warn('Open-Meteo failed, trying OpenWeatherMap fallback:', primaryError)
 
     if (API_KEY) {
       try {
-        const data = await fetchOpenWeatherMapData(city)
+        const data = await fetchOpenWeatherMapData(city, signal)
         return { ...data, source: 'openweathermap' }
       } catch (fallbackError) {
         console.warn('OpenWeatherMap fallback also failed:', fallbackError)

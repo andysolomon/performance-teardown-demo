@@ -20,21 +20,29 @@ export function useWeather(city: City): UseWeatherResult {
   const [error, setError] = useState<WeatherError | null>(null)
   const [source, setSource] = useState<'open-meteo' | 'openweathermap' | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   const fetchData = useCallback(async () => {
+    abortControllerRef.current?.abort()
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+
     setIsLoading(true)
     setError(null)
 
     try {
-      const data: WeatherResult = await fetchWeatherData(city)
+      const data: WeatherResult = await fetchWeatherData(city, controller.signal)
       setCurrent(data.current)
       setForecast(data.forecast)
       setSource(data.source)
     } catch (err) {
+      if (controller.signal.aborted) return
       setError(err as WeatherError)
       setSource(null)
     } finally {
-      setIsLoading(false)
+      if (!controller.signal.aborted) {
+        setIsLoading(false)
+      }
     }
   }, [city])
 
@@ -51,6 +59,7 @@ export function useWeather(city: City): UseWeatherResult {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
       }
+      abortControllerRef.current?.abort()
     }
   }, [fetchData])
 

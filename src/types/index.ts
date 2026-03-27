@@ -150,13 +150,13 @@ export interface Dataset {
 export interface WeatherData {
   location: string
   temperature: number
-  feelsLike: number
+  feelsLike?: number
   humidity: number
   pressure: number
   windSpeed: number
-  windDirection: number
+  windDirection?: number
   uvIndex?: number
-  visibility: number
+  visibility?: number
   conditions: string
   conditionIcon: string
   sunrise: string

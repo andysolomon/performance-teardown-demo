@@ -79,6 +79,9 @@ describe('fetchOpenMeteoWeather', () => {
       wind_speed_10m: 11.8,
       weather_code: 0,
       pressure_msl: 1015.2,
+      apparent_temperature: 70.1,
+      wind_direction_10m: 225.4,
+      visibility: 24140,
       uv_index: 5.3,
     },
     daily: {
@@ -117,6 +120,9 @@ describe('fetchOpenMeteoWeather', () => {
     expect(result.current.humidity).toBe(65)
     expect(result.current.pressure).toBe(1015)
     expect(result.current.windSpeed).toBe(12)
+    expect(result.current.feelsLike).toBe(70)
+    expect(result.current.windDirection).toBe(225)
+    expect(result.current.visibility).toBe(15)
     expect(result.current.conditions).toBe('Clear')
     expect(result.current.uvIndex).toBe(5.3)
     expect(result.current.sunrise).toBe('6:30 AM')
@@ -136,6 +142,31 @@ describe('fetchOpenMeteoWeather', () => {
     globalThis.fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'))
 
     await expect(fetchOpenMeteoWeather(testCity)).rejects.toMatchObject({ type: 'network' })
+  })
+
+  it('returns undefined for optional fields when not in API response', async () => {
+    const responseWithoutOptionalFields = {
+      ...mockOpenMeteoResponse,
+      current: {
+        temperature_2m: 72.5,
+        relative_humidity_2m: 65,
+        wind_speed_10m: 11.8,
+        weather_code: 0,
+        pressure_msl: 1015.2,
+      },
+    }
+
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(responseWithoutOptionalFields),
+    })
+
+    const result = await fetchOpenMeteoWeather(testCity)
+
+    expect(result.current.feelsLike).toBeUndefined()
+    expect(result.current.windDirection).toBeUndefined()
+    expect(result.current.visibility).toBeUndefined()
+    expect(result.current.uvIndex).toBeUndefined()
   })
 
   it('does not call Math.random', async () => {

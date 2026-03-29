@@ -1,34 +1,9 @@
-import { test, expect, type Page } from '@playwright/test'
+import { test, expect } from '@playwright/test'
+import { mockWeatherApi } from './fixtures/weather'
 
-const OPEN_METEO_FIXTURE = {
-  current: {
-    temperature_2m: 72,
-    relative_humidity_2m: 65,
-    wind_speed_10m: 12,
-    weather_code: 0,
-    pressure_msl: 1015,
-    apparent_temperature: 70,
-    wind_direction_10m: 180,
-    visibility: 16090,
-    uv_index: 5,
-  },
-  daily: {
-    time: ['2025-03-13', '2025-03-14', '2025-03-15', '2025-03-16', '2025-03-17'],
-    temperature_2m_max: [75, 78, 80, 76, 74],
-    temperature_2m_min: [55, 58, 60, 54, 52],
-    weather_code: [0, 3, 0, 2, 1],
-    relative_humidity_2m_mean: [60, 55, 50, 62, 58],
-    sunrise: ['2025-03-13T06:30', '2025-03-14T06:29', '2025-03-15T06:28', '2025-03-16T06:27', '2025-03-17T06:26'],
-    sunset: ['2025-03-13T19:45', '2025-03-14T19:46', '2025-03-15T19:47', '2025-03-16T19:48', '2025-03-17T19:49'],
-  },
-  timezone: 'America/New_York',
-}
-
-async function mockWeatherApi(page: Page) {
-  await page.route('**/api.open-meteo.com/**', (route) =>
-    route.fulfill({ status: 200, body: JSON.stringify(OPEN_METEO_FIXTURE), contentType: 'application/json' })
-  )
-}
+test.beforeEach(async ({ page }) => {
+  await mockWeatherApi(page)
+})
 
 test.describe('Weather Dashboard Map View', () => {
   test('displays map container', async ({ page }) => {
@@ -96,7 +71,6 @@ test.describe('Weather Dashboard Map View', () => {
 
 test.describe('Weather Panel Content', () => {
   test('displays loading or loaded state', async ({ page }) => {
-    await mockWeatherApi(page)
     await page.goto('/?city=atlanta')
 
     await expect(page.locator('.weather-panel.open')).toBeVisible({ timeout: 10000 })
@@ -105,14 +79,12 @@ test.describe('Weather Panel Content', () => {
   })
 
   test('displays weather data after loading', async ({ page }) => {
-    await mockWeatherApi(page)
     await page.goto('/?city=atlanta')
 
     await expect(page.locator('.dashboard-header')).toBeVisible({ timeout: 15000 })
   })
 
   test('displays metric cards', async ({ page }) => {
-    await mockWeatherApi(page)
     await page.goto('/?city=atlanta')
 
     await expect(page.locator('.metrics-grid')).toBeVisible({ timeout: 15000 })
@@ -123,7 +95,6 @@ test.describe('Weather Panel Content', () => {
   })
 
   test('displays chart sections', async ({ page }) => {
-    await mockWeatherApi(page)
     await page.goto('/?city=atlanta')
 
     await expect(page.locator('.charts-section')).toBeVisible({ timeout: 15000 })
@@ -134,7 +105,6 @@ test.describe('Weather Panel Content', () => {
   })
 
   test('displays additional weather info', async ({ page }) => {
-    await mockWeatherApi(page)
     await page.goto('/?city=atlanta')
 
     await expect(page.locator('.additional-info')).toBeVisible({ timeout: 15000 })
@@ -146,7 +116,6 @@ test.describe('Weather Panel Content', () => {
   })
 
   test('displays weather data source', async ({ page }) => {
-    await mockWeatherApi(page)
     await page.goto('/?city=atlanta')
 
     await expect(page.locator('.dashboard-header')).toBeVisible({ timeout: 15000 })
@@ -172,7 +141,6 @@ test.describe('City Navigation', () => {
 
   for (const city of cities) {
     test(`displays weather for ${city.name}`, async ({ page }) => {
-      await mockWeatherApi(page)
       await page.goto(`/?city=${city.id}`)
 
       await expect(page.locator('.weather-panel.open')).toBeVisible({ timeout: 10000 })
@@ -424,7 +392,6 @@ test.describe('Desktop Drawer', () => {
 
 test.describe('Marker Click', () => {
   test('clicking a map marker opens panel and updates URL', async ({ page }) => {
-    await mockWeatherApi(page)
     await page.goto('/')
     await expect(page.locator('.map-container')).toBeVisible({ timeout: 10000 })
 
@@ -439,7 +406,6 @@ test.describe('Marker Click', () => {
 
 test.describe('Dialog Accessibility (E2E)', () => {
   test('panel has role="dialog" and aria-modal="true"', async ({ page }) => {
-    await mockWeatherApi(page)
     await page.goto('/?city=atlanta')
 
     const panel = page.locator('.weather-panel.open')
@@ -449,7 +415,6 @@ test.describe('Dialog Accessibility (E2E)', () => {
   })
 
   test('focus moves inside panel after open', async ({ page }) => {
-    await mockWeatherApi(page)
     await page.goto('/?city=atlanta')
 
     await expect(page.locator('.weather-panel.open')).toBeVisible({ timeout: 10000 })
@@ -462,7 +427,6 @@ test.describe('Dialog Accessibility (E2E)', () => {
   })
 
   test('Escape closes panel and returns focus', async ({ page }) => {
-    await mockWeatherApi(page)
     await page.goto('/')
     await expect(page.locator('.map-container')).toBeVisible({ timeout: 10000 })
 

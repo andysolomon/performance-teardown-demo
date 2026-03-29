@@ -1,16 +1,12 @@
-name: CI
+name: Smoke Tests
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
 
 jobs:
-  ci:
+  smoke:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,12 +17,9 @@ jobs:
           cache: npm
 
       - run: npm ci
-      - run: npm run lint
-      - run: npx tsc --noEmit -p tsconfig.app.json
-      - run: npm run test:run
       - run: npm run build
       - run: npx playwright install --with-deps chromium
-      - run: npx playwright test --project=chromium
+      - run: npx playwright test --project=smoke
         env:
           VITE_MAPBOX_TOKEN: ${{ secrets.VITE_MAPBOX_TOKEN }}
           VITE_OPENWEATHER_API_KEY: ${{ secrets.VITE_OPENWEATHER_API_KEY }}

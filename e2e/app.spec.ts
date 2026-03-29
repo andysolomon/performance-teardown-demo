@@ -153,8 +153,32 @@ test.describe('Error Handling', () => {
   test('handles invalid city ID in URL gracefully', async ({ page }) => {
     await page.goto('/?city=invalid-city')
 
-    // Invalid city should not open panel
-    await expect(page.locator('.map-container')).toBeVisible({ timeout: 10000 })
+    // Invalid city should open panel with error view
+    await expect(page.locator('.weather-panel.open')).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('heading', { name: 'City not supported' })).toBeVisible()
+    await expect(page.getByText(/invalid-city/)).toBeVisible()
+  })
+
+  test('invalid city view shows Return Home button that navigates to /', async ({ page }) => {
+    await page.goto('/?city=nope')
+
+    await expect(page.locator('.weather-panel.open')).toBeVisible({ timeout: 10000 })
+
+    await page.getByRole('button', { name: 'Return Home' }).click()
+
+    await expect(page.locator('.weather-panel.open')).not.toBeVisible({ timeout: 5000 })
+    await expect(page).toHaveURL('/')
+  })
+
+  test('invalid city view allows selecting a valid city', async ({ page }) => {
+    await page.goto('/?city=nope')
+
+    await expect(page.getByRole('heading', { name: 'City not supported' })).toBeVisible({ timeout: 10000 })
+
+    await page.locator('.city-picker-select').selectOption('tokyo')
+
+    await expect(page.locator('.dashboard-header')).toBeVisible({ timeout: 15000 })
+    await expect(page).toHaveURL(/\?city=tokyo/)
   })
 
   test('shows map error when Mapbox token is rejected', async ({ page }) => {

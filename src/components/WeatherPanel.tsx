@@ -9,6 +9,7 @@ interface WeatherPanelProps {
 }
 
 const DISMISS_THRESHOLD = 0.3
+const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
 export function WeatherPanel({ isOpen, onClose, cityName, children }: WeatherPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
@@ -18,6 +19,7 @@ export function WeatherPanel({ isOpen, onClose, cityName, children }: WeatherPan
   const [translateY, setTranslateY] = useState(0)
   const touchStart = useRef<{ y: number; time: number } | null>(null)
   const isMobileRef = useRef(false)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
     const check = () => { isMobileRef.current = window.innerWidth <= 768 }
@@ -25,6 +27,23 @@ export function WeatherPanel({ isOpen, onClose, cityName, children }: WeatherPan
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
   }, [])
+
+  // Focus-on-open + capture previous focus for restore
+  useEffect(() => {
+    if (isOpen) {
+      previousFocusRef.current = document.activeElement as HTMLElement | null
+      requestAnimationFrame(() => {
+        const panel = panelRef.current
+        if (!panel) return
+        const firstFocusable = panel.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)
+        if (firstFocusable) {
+          firstFocusable.focus()
+        } else {
+          panel.focus()
+        }
+      })
+    }
+  }, [isOpen])
 
   // Reset state when panel closes — syncing internal state to the isOpen prop
   useEffect(() => {
@@ -35,6 +54,55 @@ export function WeatherPanel({ isOpen, onClose, cityName, children }: WeatherPan
       setDragging(false)
     }
   }, [isOpen])
+
+  // Focus restore on close
+  const handleClose = useCallback(() => {
+    const elToRestore = previousFocusRef.current
+    onClose()
+    requestAnimationFrame(() => {
+      elToRestore?.focus()
+    })
+  }, [onClose])
+
+  // Escape key + focus trap
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation()
+        handleClose()
+        return
+      }
+
+      if (e.key !== 'Tab') return
+
+      const panel = panelRef.current
+      if (!panel) return
+
+      const focusable = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
+        .filter((el) => el.offsetParent !== null)
+      if (focusable.length === 0) return
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault()
+          last.focus()
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown, true)
+    return () => document.removeEventListener('keydown', handleKeyDown, true)
+  }, [isOpen, handleClose])
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (!isMobileRef.current) return
@@ -61,7 +129,7 @@ export function WeatherPanel({ isOpen, onClose, cityName, children }: WeatherPan
 
     if (translateY > threshold) {
       // Dismiss
-      onClose()
+      handleClose()
     } else if (translateY < -50 && !expanded) {
       // Swipe up → expand
       setExpanded(true)
@@ -73,11 +141,11 @@ export function WeatherPanel({ isOpen, onClose, cityName, children }: WeatherPan
     setTranslateY(0)
     setDragging(false)
     touchStart.current = null
-  }, [translateY, expanded, onClose])
+  }, [translateY, expanded, handleClose])
 
-  // Prevent body scroll when panel is open on mobile
+  // Prevent body scroll when panel is open (all viewports)
   useEffect(() => {
-    if (isOpen && isMobileRef.current) {
+    if (isOpen) {
       document.body.style.overflow = 'hidden'
       return () => { document.body.style.overflow = '' }
     }
@@ -87,16 +155,22 @@ export function WeatherPanel({ isOpen, onClose, cityName, children }: WeatherPan
     ? { transform: `translateY(${translateY}px)` }
     : undefined
 
+  const headingId = 'weather-panel-title'
+
   return (
     <>
       <div
         className={`weather-panel-backdrop ${isOpen ? 'open' : ''}`}
-        onClick={onClose}
+        onClick={handleClose}
       />
       <div
         ref={panelRef}
         className={`weather-panel ${isOpen ? 'open' : ''} ${expanded ? 'expanded' : ''} ${dragging ? 'dragging' : ''}`}
         style={panelStyle}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={headingId}
+        tabIndex={-1}
       >
         <div
           className="weather-panel-handle"
@@ -107,8 +181,8 @@ export function WeatherPanel({ isOpen, onClose, cityName, children }: WeatherPan
           <div className="weather-panel-pill" />
         </div>
         <div className="weather-panel-header">
-          <h2>{cityName || 'Weather'}</h2>
-          <button className="weather-panel-close" onClick={onClose} aria-label="Close panel">
+          <h2 id={headingId}>{cityName || 'Weather'}</h2>
+          <button className="weather-panel-close" onClick={handleClose} aria-label="Close panel">
             ✕
           </button>
         </div>

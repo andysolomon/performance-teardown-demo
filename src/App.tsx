@@ -1,10 +1,12 @@
-import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
-import { Dashboard } from './components/Dashboard'
+import { useState, useCallback, useEffect, useMemo, useRef, lazy, Suspense } from 'react'
 import { MapView } from './components/MapView'
 import { WeatherPanel } from './components/WeatherPanel'
+import { PanelSkeleton } from './components/PanelSkeleton'
 import { useWeather } from './hooks/useWeather'
 import { CITIES, DEFAULT_CITY, type City } from './types'
 import './App.css'
+
+const Dashboard = lazy(() => import('./components/Dashboard').then((m) => ({ default: m.Dashboard })))
 
 function getCityFromURL(): City | null {
   const params = new URLSearchParams(window.location.search)
@@ -58,16 +60,18 @@ function App() {
         markerRefs={markerRefs}
       />
       <WeatherPanel isOpen={selectedCity !== null} onClose={handlePanelClose} cityName={selectedCity?.name}>
-        <Dashboard
-          current={current}
-          forecast={forecast}
-          isLoading={isLoading}
-          error={error}
-          source={source}
-          onRetry={refetch}
-          city={activeCity}
-          onCityChange={(city) => selectCity(city)}
-        />
+        <Suspense fallback={<PanelSkeleton />}>
+          <Dashboard
+            current={current}
+            forecast={forecast}
+            isLoading={isLoading}
+            error={error}
+            source={source}
+            onRetry={refetch}
+            city={activeCity}
+            onCityChange={(city) => selectCity(city)}
+          />
+        </Suspense>
       </WeatherPanel>
       <div className="sr-only" aria-live="polite" role="status">
         {announcement}

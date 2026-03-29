@@ -35,20 +35,6 @@ function App() {
   }, [])
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && selectedCity) {
-        const cityId = selectedCity.id
-        selectCity(null)
-        requestAnimationFrame(() => {
-          markerRefs.current[cityId]?.focus()
-        })
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedCity, selectCity])
-
-  useEffect(() => {
     if (selectedCity) {
       lastSelectedRef.current = selectedCity.id
     }

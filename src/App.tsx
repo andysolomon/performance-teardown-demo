@@ -5,23 +5,10 @@ import { InvalidCityView } from './components/InvalidCityView'
 import { PanelSkeleton } from './components/PanelSkeleton'
 import { useWeather } from './hooks/useWeather'
 import { CITIES, DEFAULT_CITY, type City } from './types'
+import { getCityFromURL } from './utils/cityUrl'
 import './App.css'
 
 const Dashboard = lazy(() => import('./components/Dashboard').then((m) => ({ default: m.Dashboard })))
-
-export interface CityURLResult {
-  city: City | null
-  invalidId: string | null
-}
-
-export function getCityFromURL(): CityURLResult {
-  const params = new URLSearchParams(window.location.search)
-  const cityId = params.get('city')
-  if (!cityId) return { city: null, invalidId: null }
-  const found = CITIES.find((c) => c.id === cityId)
-  if (found) return { city: found, invalidId: null }
-  return { city: null, invalidId: cityId }
-}
 
 function App() {
   const [selectedCity, setSelectedCity] = useState<City | null>(() => getCityFromURL().city)

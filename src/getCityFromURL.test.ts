@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { getCityFromURL } from './App'
+import { getCityFromURL } from './utils/cityUrl'
 import { CITIES } from './types'
 
 function setURL(search: string) {

@@ -1,13 +1,15 @@
-import { describe, it, expect, vi, afterEach } from 'vitest'
-import { renderHook, waitFor } from '@testing-library/react'
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
+import { renderHook, waitFor, act } from '@testing-library/react'
 import { useWeather } from './useWeather'
-import type { City } from '../types'
+import type { City, WeatherError } from '../types'
 
 vi.mock('../services/weatherApi')
 
 import { fetchWeatherData } from '../services/weatherApi'
 
 const mockedFetch = vi.mocked(fetchWeatherData)
+
+const REFRESH_INTERVAL = 10 * 60 * 1000
 
 const atlanta: City = {
   id: 'atlanta',
@@ -30,7 +32,7 @@ const tokyo: City = {
   backgroundImage: 'https://example.com/img.jpg',
 }
 
-function makeResult(cityName: string, country: string) {
+function makeResult(cityName: string, country: string, source: 'open-meteo' | 'openweathermap' = 'open-meteo') {
   return {
     current: {
       location: `${cityName}, ${country}`,
@@ -44,8 +46,25 @@ function makeResult(cityName: string, country: string) {
       sunset: '7:45 PM',
       lastUpdated: '12:00 PM',
     },
-    forecast: [],
-    source: 'open-meteo' as const,
+    forecast: [
+      {
+        date: 'Mon, Jan 1',
+        tempHigh: 78,
+        tempLow: 60,
+        humidity: 55,
+        conditions: 'Clear',
+        conditionIcon: '01d',
+      },
+      {
+        date: 'Tue, Jan 2',
+        tempHigh: 75,
+        tempLow: 58,
+        humidity: 60,
+        conditions: 'Clouds',
+        conditionIcon: '02d',
+      },
+    ],
+    source,
   }
 }
 
@@ -54,7 +73,7 @@ afterEach(() => {
 })
 
 describe('useWeather', () => {
-  it('fetches data for the given city', async () => {
+  it('fetches data and exposes all returned state', async () => {
     mockedFetch.mockResolvedValue(makeResult('Atlanta', 'US'))
 
     const { result } = renderHook(() => useWeather(atlanta))
@@ -64,7 +83,60 @@ describe('useWeather', () => {
     })
 
     expect(result.current.current?.location).toBe('Atlanta, US')
+    expect(result.current.forecast).toHaveLength(2)
+    expect(result.current.forecast[0].tempHigh).toBe(78)
+    expect(result.current.source).toBe('open-meteo')
+    expect(result.current.error).toBeNull()
     expect(mockedFetch).toHaveBeenCalledWith(atlanta, expect.any(AbortSignal))
+  })
+
+  it('exposes fallback source when openweathermap is used', async () => {
+    mockedFetch.mockResolvedValue(makeResult('Atlanta', 'US', 'openweathermap'))
+
+    const { result } = renderHook(() => useWeather(atlanta))
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    expect(result.current.source).toBe('openweathermap')
+    expect(result.current.current?.location).toBe('Atlanta, US')
+  })
+
+  it('sets error state when fetch rejects', async () => {
+    const weatherError: WeatherError = { type: 'network', message: 'Network error.' }
+    mockedFetch.mockRejectedValue(weatherError)
+
+    const { result } = renderHook(() => useWeather(atlanta))
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    expect(result.current.error).toEqual(weatherError)
+    expect(result.current.source).toBeNull()
+    expect(result.current.current).toBeNull()
+  })
+
+  it('refetch triggers a new fetch and updates state', async () => {
+    mockedFetch.mockResolvedValue(makeResult('Atlanta', 'US'))
+
+    const { result } = renderHook(() => useWeather(atlanta))
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    const callsAfterMount = mockedFetch.mock.calls.length
+
+    mockedFetch.mockResolvedValue(makeResult('Atlanta', 'US', 'openweathermap'))
+
+    await act(async () => {
+      await result.current.refetch()
+    })
+
+    expect(mockedFetch.mock.calls.length - callsAfterMount).toBeGreaterThanOrEqual(1)
+    expect(result.current.source).toBe('openweathermap')
   })
 
   it('discards stale response when city changes rapidly', async () => {
@@ -143,5 +215,53 @@ describe('useWeather', () => {
     unmount()
 
     expect(capturedSignal?.aborted).toBe(true)
+  })
+
+  describe('interval refresh', () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ shouldAdvanceTime: true })
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('re-fetches after REFRESH_INTERVAL', async () => {
+      mockedFetch.mockResolvedValue(makeResult('Atlanta', 'US'))
+
+      const { result } = renderHook(() => useWeather(atlanta))
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
+      const callsAfterMount = mockedFetch.mock.calls.length
+
+      await act(async () => {
+        vi.advanceTimersByTime(REFRESH_INTERVAL)
+      })
+
+      expect(mockedFetch.mock.calls.length).toBeGreaterThan(callsAfterMount)
+    })
+
+    it('clears interval on unmount and prevents further fetches', async () => {
+      mockedFetch.mockResolvedValue(makeResult('Atlanta', 'US'))
+
+      const { result, unmount } = renderHook(() => useWeather(atlanta))
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
+      unmount()
+
+      const callsAfterUnmount = mockedFetch.mock.calls.length
+
+      await act(async () => {
+        vi.advanceTimersByTime(REFRESH_INTERVAL * 2)
+      })
+
+      expect(mockedFetch.mock.calls.length).toBe(callsAfterUnmount)
+    })
   })
 })

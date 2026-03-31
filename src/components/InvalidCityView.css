@@ -1,0 +1,36 @@
+.invalid-city-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+}
+
+.invalid-city-state h2 {
+  margin: 0 0 8px;
+  color: var(--text-h);
+}
+
+.invalid-city-state p {
+  color: var(--text);
+  margin: 0 0 8px;
+}
+
+.invalid-city-id {
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.invalid-city-hint {
+  margin-bottom: 24px !important;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.invalid-city-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}

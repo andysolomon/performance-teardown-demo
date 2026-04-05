@@ -24,8 +24,8 @@
   bottom: 0;
   background: linear-gradient(
     to bottom,
-    rgba(255, 255, 255, 0.55),
-    rgba(255, 255, 255, 0.7)
+    rgba(255, 255, 255, 0.75),
+    rgba(255, 255, 255, 0.85)
   );
   z-index: -1;
   backdrop-filter: saturate(1.2);
@@ -35,8 +35,8 @@
   .dashboard-overlay {
     background: linear-gradient(
       to bottom,
-      rgba(18, 18, 22, 0.55),
-      rgba(18, 18, 22, 0.7)
+      rgba(18, 18, 22, 0.75),
+      rgba(18, 18, 22, 0.85)
     );
   }
 }

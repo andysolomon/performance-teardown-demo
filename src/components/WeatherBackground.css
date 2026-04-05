@@ -187,3 +187,25 @@
   0%, 100% { background-position: 0 0; }
   50% { background-position: 0 100%; }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .weather-bg-blob {
+    animation: none;
+    opacity: 1;
+  }
+
+  .blob-1,
+  .blob-2,
+  .blob-3 {
+    animation: none;
+    opacity: 1;
+  }
+
+  .weather-rain::after,
+  .weather-snow::after,
+  .weather-storm::after,
+  .weather-fog::after,
+  .weather-hot::after {
+    animation: none;
+  }
+}

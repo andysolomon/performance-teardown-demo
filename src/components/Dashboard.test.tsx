@@ -104,7 +104,7 @@ describe('Dashboard', () => {
     )
 
     expect(screen.getByText('Temperature')).toBeInTheDocument()
-    expect(screen.getByText('Humidity')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Humidity' })).toBeInTheDocument()
     expect(screen.getByText('Wind Speed')).toBeInTheDocument()
     expect(screen.getByText('UV Index')).toBeInTheDocument()
   })
@@ -125,7 +125,7 @@ describe('Dashboard', () => {
     )
 
     expect(screen.getByText('Temperature')).toBeInTheDocument()
-    expect(screen.getByText('Humidity')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Humidity' })).toBeInTheDocument()
     expect(screen.getByText('Wind Speed')).toBeInTheDocument()
     expect(screen.queryByText('UV Index')).not.toBeInTheDocument()
   })
@@ -228,5 +228,59 @@ describe('Dashboard', () => {
     expect(screen.getByText('22')).toBeInTheDocument()
     expect(screen.getByText('km/h')).toBeInTheDocument()
     expect(screen.getByRole('radio', { name: '°C' })).toHaveAttribute('aria-checked', 'true')
+  })
+
+  it('charts section has aria-label', () => {
+    render(
+      <Dashboard
+        current={mockCurrent}
+        forecast={mockForecast}
+        isLoading={false}
+        error={null}
+        source="open-meteo"
+        onRetry={vi.fn()}
+        city={DEFAULT_CITY}
+        onCityChange={vi.fn()}
+      />
+    )
+
+    expect(screen.getByLabelText('Forecast Charts')).toBeInTheDocument()
+  })
+
+  it('chart wrappers have role="img" and aria-label', () => {
+    render(
+      <Dashboard
+        current={mockCurrent}
+        forecast={mockForecast}
+        isLoading={false}
+        error={null}
+        source="open-meteo"
+        onRetry={vi.fn()}
+        city={DEFAULT_CITY}
+        onCityChange={vi.fn()}
+      />
+    )
+
+    const chartImages = screen.getAllByRole('img')
+    expect(chartImages.length).toBeGreaterThanOrEqual(3)
+  })
+
+  it('provides sr-only data tables for charts', () => {
+    render(
+      <Dashboard
+        current={mockCurrent}
+        forecast={mockForecast}
+        isLoading={false}
+        error={null}
+        source="open-meteo"
+        onRetry={vi.fn()}
+        city={DEFAULT_CITY}
+        onCityChange={vi.fn()}
+      />
+    )
+
+    expect(screen.getByText('Temperature Trend Data')).toBeInTheDocument()
+    expect(screen.getByText('Conditions Distribution Data')).toBeInTheDocument()
+    expect(screen.getByText('Humidity Forecast Data')).toBeInTheDocument()
   })
 })

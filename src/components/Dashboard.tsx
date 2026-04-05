@@ -19,6 +19,7 @@ import { CityPicker } from './CityPicker'
 import { UnitToggle } from './UnitToggle'
 import { PanelSkeleton } from './PanelSkeleton'
 import { getStoredUnits, setStoredUnits, convertTemp, convertWindSpeed, convertVisibility, tempUnit, speedUnit, distanceUnit, type UnitSystem } from '../utils/units'
+import { temperatureSummary, conditionsSummary, humiditySummary } from '../utils/chartSummaries'
 import './Dashboard.css'
 
 ChartJS.register(
@@ -278,27 +279,54 @@ export function Dashboard({ current, forecast, isLoading, error, source, onRetry
         ))}
       </section>
 
-      <section className="charts-section">
+      <section className="charts-section" aria-label="Forecast Charts">
         <div className="chart-container large">
           <h2>Temperature Trend</h2>
-          <div className="chart-wrapper">
+          <div className="chart-wrapper" role="img" aria-label={temperatureSummary(forecast, tempUnit(units))}>
             {temperatureChartData && <Line data={temperatureChartData} options={chartOptions} />}
           </div>
+          <table className="sr-only">
+            <caption>Temperature Trend Data</caption>
+            <thead><tr><th>Date</th><th>High</th><th>Low</th></tr></thead>
+            <tbody>
+              {forecast.map((d) => (
+                <tr key={d.date}><td>{d.date}</td><td>{convertTemp(d.tempHigh, units)}{tempUnit(units)}</td><td>{convertTemp(d.tempLow, units)}{tempUnit(units)}</td></tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
         <div className="chart-row">
           <div className="chart-container">
             <h2>Conditions Distribution</h2>
-            <div className="chart-wrapper">
+            <div className="chart-wrapper" role="img" aria-label={conditionsSummary(forecast)}>
               {conditionsChartData && <Pie data={conditionsChartData} options={pieOptions} />}
             </div>
+            <table className="sr-only">
+              <caption>Conditions Distribution Data</caption>
+              <thead><tr><th>Date</th><th>Conditions</th></tr></thead>
+              <tbody>
+                {forecast.map((d) => (
+                  <tr key={d.date}><td>{d.date}</td><td>{d.conditions}</td></tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
           <div className="chart-container">
             <h2>Humidity Forecast</h2>
-            <div className="chart-wrapper">
+            <div className="chart-wrapper" role="img" aria-label={humiditySummary(forecast)}>
               {humidityChartData && <Bar data={humidityChartData} options={chartOptions} />}
             </div>
+            <table className="sr-only">
+              <caption>Humidity Forecast Data</caption>
+              <thead><tr><th>Date</th><th>Humidity</th></tr></thead>
+              <tbody>
+                {forecast.map((d) => (
+                  <tr key={d.date}><td>{d.date}</td><td>{d.humidity}%</td></tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </section>

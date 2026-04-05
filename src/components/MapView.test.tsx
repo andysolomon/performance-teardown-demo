@@ -34,7 +34,7 @@ describe('MapView', () => {
   it('selected marker has aria-pressed true', () => {
     render(<MapView selectedCityId="atlanta" onCitySelect={vi.fn()} />)
 
-    const marker = screen.getByRole('button', { name: 'Atlanta, US' })
+    const marker = screen.getByRole('button', { name: 'Atlanta, US — selected' })
     expect(marker).toHaveAttribute('aria-pressed', 'true')
     expect(marker.className).toContain('selected')
   })
@@ -85,5 +85,19 @@ describe('MapView', () => {
     for (const city of CITIES_FOR_MARKERS) {
       expect(screen.getByText(city.name)).toBeInTheDocument()
     }
+  })
+
+  it('enriches aria-label with selected state', () => {
+    render(<MapView selectedCityId="atlanta" onCitySelect={vi.fn()} />)
+
+    expect(screen.getByRole('button', { name: 'Atlanta, US — selected' })).toBeInTheDocument()
+  })
+
+  it('non-selected markers do not include selected in aria-label', () => {
+    render(<MapView selectedCityId="atlanta" onCitySelect={vi.fn()} />)
+
+    const londonMarker = screen.getByRole('button', { name: 'London, GB' })
+    expect(londonMarker).toBeInTheDocument()
+    expect(londonMarker.getAttribute('aria-label')).not.toContain('selected')
   })
 })

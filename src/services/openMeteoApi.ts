@@ -86,7 +86,10 @@ export async function fetchOpenMeteoWeather(city: City, signal?: AbortSignal): P
   try {
     const url = `${BASE_URL}/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,pressure_msl,apparent_temperature,wind_direction_10m,visibility,uv_index&daily=weather_code,temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,sunrise,sunset&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`
 
-    const response = await fetch(url, { signal })
+    const timeoutSignal = AbortSignal.timeout(10_000)
+    const composedSignal = signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal
+
+    const response = await fetch(url, { signal: composedSignal })
 
     if (!response.ok) {
       throw parseError(response.status)
@@ -129,6 +132,10 @@ export async function fetchOpenMeteoWeather(city: City, signal?: AbortSignal): P
   } catch (error) {
     if ((error as WeatherError).type) {
       throw error
+    }
+
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      throw { type: 'timeout' as WeatherErrorType, message: 'Request timed out. Please try again.' }
     }
 
     if (error instanceof TypeError && error.message.includes('fetch')) {

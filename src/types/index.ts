@@ -178,7 +178,7 @@ export interface WeatherApiResponse {
   forecast: ForecastDay[]
 }
 
-export type WeatherErrorType = 'network' | 'rate_limit' | 'invalid_key' | 'unknown'
+export type WeatherErrorType = 'network' | 'rate_limit' | 'invalid_key' | 'timeout' | 'unknown'
 
 export interface WeatherError {
   type: WeatherErrorType

@@ -187,8 +187,18 @@ describe('fetchOpenMeteoWeather', () => {
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
       expect.any(String),
-      expect.objectContaining({ signal: controller.signal }),
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
     )
+  })
+
+  it('throws timeout error when request times out', async () => {
+    const timeoutError = new DOMException('The operation was aborted.', 'TimeoutError')
+    globalThis.fetch = vi.fn().mockRejectedValue(timeoutError)
+
+    await expect(fetchOpenMeteoWeather(testCity)).rejects.toMatchObject({
+      type: 'timeout',
+      message: 'Request timed out. Please try again.',
+    })
   })
 
   it('does not call Math.random', async () => {

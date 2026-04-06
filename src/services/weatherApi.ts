@@ -55,7 +55,10 @@ async function fetchOpenWeatherMapData(city: City, signal?: AbortSignal): Promis
   const currentUrl = `${BASE_URL}/weather?q=${encodeURIComponent(city.openWeatherQuery)}&units=imperial&appid=${API_KEY}`
   const forecastUrl = `${BASE_URL}/forecast?q=${encodeURIComponent(city.openWeatherQuery)}&units=imperial&appid=${API_KEY}`
 
-  const [currentRes, forecastRes] = await Promise.all([fetch(currentUrl, { signal }), fetch(forecastUrl, { signal })])
+  const timeoutSignal = AbortSignal.timeout(10_000)
+  const composedSignal = signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal
+
+  const [currentRes, forecastRes] = await Promise.all([fetch(currentUrl, { signal: composedSignal }), fetch(forecastUrl, { signal: composedSignal })])
 
   if (!currentRes.ok) {
     const errorData = await currentRes.json().catch(() => ({}))
@@ -86,29 +89,70 @@ async function fetchOpenWeatherMapData(city: City, signal?: AbortSignal): Promis
     lastUpdated: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
   }
 
-  const dailyForecasts: ForecastDay[] = []
-  const seenDates = new Set<string>()
+  return { current, forecast: aggregateForecasts(forecastData.list) }
+}
 
-  for (const item of forecastData.list) {
+const CONDITION_SEVERITY: Record<string, number> = {
+  Thunderstorm: 7,
+  Rain: 6,
+  Drizzle: 5,
+  Snow: 4,
+  Fog: 3,
+  Clouds: 2,
+  Clear: 1,
+}
+
+export function aggregateForecasts(list: ForecastResponse['list']): ForecastDay[] {
+  const grouped = new Map<string, ForecastResponse['list']>()
+
+  for (const item of list) {
     const dateStr = new Date(item.dt * 1000).toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
     })
-    if (!seenDates.has(dateStr) && seenDates.size < 5) {
-      seenDates.add(dateStr)
-      dailyForecasts.push({
-        date: dateStr,
-        tempHigh: Math.round(item.main.temp_max),
-        tempLow: Math.round(item.main.temp_min),
-        humidity: item.main.humidity,
-        conditions: item.weather[0].main,
-        conditionIcon: item.weather[0].icon,
-      })
+    if (!grouped.has(dateStr)) {
+      grouped.set(dateStr, [])
     }
+    grouped.get(dateStr)!.push(item)
   }
 
-  return { current, forecast: dailyForecasts }
+  const result: ForecastDay[] = []
+  for (const [dateStr, items] of grouped) {
+    if (result.length >= 5) break
+
+    let tempHigh = -Infinity
+    let tempLow = Infinity
+    let humiditySum = 0
+    let bestSeverity = 0
+    let bestCondition = 'Clear'
+    let bestIcon = '01d'
+
+    for (const item of items) {
+      tempHigh = Math.max(tempHigh, item.main.temp_max)
+      tempLow = Math.min(tempLow, item.main.temp_min)
+      humiditySum += item.main.humidity
+
+      const cond = item.weather[0].main
+      const severity = CONDITION_SEVERITY[cond] ?? 0
+      if (severity > bestSeverity) {
+        bestSeverity = severity
+        bestCondition = cond
+        bestIcon = item.weather[0].icon
+      }
+    }
+
+    result.push({
+      date: dateStr,
+      tempHigh: Math.round(tempHigh),
+      tempLow: Math.round(tempLow),
+      humidity: Math.round(humiditySum / items.length),
+      conditions: bestCondition,
+      conditionIcon: bestIcon,
+    })
+  }
+
+  return result
 }
 
 export interface WeatherResult {

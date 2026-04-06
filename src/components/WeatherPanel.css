@@ -128,3 +128,13 @@
     height: 100vh;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .weather-panel {
+    transition: none;
+  }
+
+  .weather-panel-backdrop {
+    transition: none;
+  }
+}

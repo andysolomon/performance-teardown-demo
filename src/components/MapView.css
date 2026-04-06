@@ -64,6 +64,8 @@
 .map-marker:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.9), 0 0 0 6px var(--accent);
+  border-radius: 4px;
 }
 
 .marker-pulse {
@@ -93,5 +95,16 @@
 @media (prefers-color-scheme: dark) {
   .marker-label {
     background: rgba(26, 27, 33, 0.9);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marker-dot {
+    transition: none;
+  }
+
+  .marker-pulse {
+    animation: none;
+    display: none;
   }
 }

@@ -190,6 +190,7 @@ function CityMarker({ city, isSelected, onClick, markerRef }: CityMarkerProps) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
+      e.stopPropagation()
       onClick()
     }
   }
@@ -200,7 +201,7 @@ function CityMarker({ city, isSelected, onClick, markerRef }: CityMarkerProps) {
       className={`map-marker ${isSelected ? 'selected' : ''}`}
       role="button"
       tabIndex={0}
-      aria-label={`${city.name}, ${city.country}`}
+      aria-label={`${city.name}, ${city.country}${isSelected ? ' — selected' : ''}`}
       aria-pressed={isSelected}
       onClick={(e) => {
         e.stopPropagation()

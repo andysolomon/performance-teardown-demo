@@ -115,7 +115,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    height: 50vh;
+    height: 60vh;
     border-radius: 16px 16px 0 0;
     transform: translateY(100%);
   }
@@ -126,6 +126,19 @@
 
   .weather-panel.expanded {
     height: 100vh;
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .weather-panel-header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--bg);
+    padding: 8px 16px 12px;
+  }
+
+  .weather-panel-body {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 }
 

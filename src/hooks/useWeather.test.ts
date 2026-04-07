@@ -4,10 +4,15 @@ import { useWeather } from './useWeather'
 import type { City, WeatherError } from '../types'
 
 vi.mock('../services/weatherApi')
+vi.mock('../services/weatherCache')
 
 import { fetchWeatherData } from '../services/weatherApi'
+import { getCachedWeather, setCachedWeather, isFresh } from '../services/weatherCache'
 
 const mockedFetch = vi.mocked(fetchWeatherData)
+const mockedGetCached = vi.mocked(getCachedWeather)
+const mockedSetCached = vi.mocked(setCachedWeather)
+const mockedIsFresh = vi.mocked(isFresh)
 
 const REFRESH_INTERVAL = 10 * 60 * 1000
 
@@ -67,6 +72,10 @@ function makeResult(cityName: string, country: string, source: 'open-meteo' | 'o
     source,
   }
 }
+
+beforeEach(() => {
+  mockedGetCached.mockReturnValue(null)
+})
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -262,6 +271,123 @@ describe('useWeather', () => {
       })
 
       expect(mockedFetch.mock.calls.length).toBe(callsAfterUnmount)
+    })
+  })
+
+  describe('caching', () => {
+    beforeEach(() => {
+      mockedFetch.mockReset()
+      mockedGetCached.mockReset()
+      mockedSetCached.mockReset()
+      mockedIsFresh.mockReset()
+      mockedGetCached.mockReturnValue(null)
+    })
+
+    it('returns fresh cached data without fetching', async () => {
+      const cachedEntry = {
+        ...makeResult('Atlanta', 'US'),
+        timestamp: Date.now(),
+      }
+      mockedGetCached.mockReturnValue(cachedEntry)
+      mockedIsFresh.mockReturnValue(true)
+
+      const { result } = renderHook(() => useWeather(atlanta))
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
+      expect(result.current.current?.location).toBe('Atlanta, US')
+      expect(result.current.source).toBe('open-meteo')
+      expect(result.current.error).toBeNull()
+      expect(mockedFetch).not.toHaveBeenCalled()
+    })
+
+    it('shows stale cache and triggers background refresh', async () => {
+      const cachedEntry = {
+        ...makeResult('Atlanta', 'US'),
+        timestamp: Date.now() - 6 * 60 * 1000,
+      }
+      mockedGetCached.mockReturnValue(cachedEntry)
+      mockedIsFresh.mockReturnValue(false)
+      mockedFetch.mockResolvedValue(makeResult('Atlanta', 'US', 'openweathermap'))
+
+      const { result } = renderHook(() => useWeather(atlanta))
+
+      // Should immediately show cached data, not loading
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
+      expect(result.current.current?.location).toBe('Atlanta, US')
+
+      // Background refresh completes
+      await waitFor(() => {
+        expect(result.current.isRefreshing).toBe(false)
+      })
+
+      expect(result.current.source).toBe('openweathermap')
+      expect(mockedSetCached).toHaveBeenCalled()
+    })
+
+    it('preserves cached data when background refresh fails', async () => {
+      const cachedEntry = {
+        ...makeResult('Atlanta', 'US'),
+        timestamp: Date.now() - 6 * 60 * 1000,
+      }
+      mockedGetCached.mockReturnValue(cachedEntry)
+      mockedIsFresh.mockReturnValue(false)
+      mockedFetch.mockRejectedValue({ type: 'network', message: 'Network error.' })
+
+      const { result } = renderHook(() => useWeather(atlanta))
+
+      await waitFor(() => {
+        expect(result.current.isRefreshing).toBe(false)
+      })
+
+      // Cached data preserved, no error shown
+      expect(result.current.current?.location).toBe('Atlanta, US')
+      expect(result.current.error).toBeNull()
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    it('manual refetch bypasses cache', async () => {
+      const cachedEntry = {
+        ...makeResult('Atlanta', 'US'),
+        timestamp: Date.now(),
+      }
+      mockedGetCached.mockReturnValue(cachedEntry)
+      mockedIsFresh.mockReturnValue(true)
+      mockedFetch.mockResolvedValue(makeResult('Atlanta', 'US', 'openweathermap'))
+
+      const { result } = renderHook(() => useWeather(atlanta))
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
+      // Initial mount uses cache, no fetch
+      const callsBeforeRefetch = mockedFetch.mock.calls.length
+      expect(callsBeforeRefetch).toBe(0)
+
+      await act(async () => {
+        await result.current.refetch()
+      })
+
+      expect(mockedFetch.mock.calls.length).toBeGreaterThan(callsBeforeRefetch)
+      expect(result.current.source).toBe('openweathermap')
+    })
+
+    it('caches data after successful fetch', async () => {
+      mockedFetch.mockResolvedValue(makeResult('Atlanta', 'US'))
+
+      const { result } = renderHook(() => useWeather(atlanta))
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
+      expect(mockedSetCached).toHaveBeenCalledWith('atlanta', makeResult('Atlanta', 'US'))
     })
   })
 })

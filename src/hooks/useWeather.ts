@@ -1,12 +1,13 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { fetchWeatherData, type WeatherResult } from '../services/weatherApi'
-import type { WeatherData, ForecastDay, WeatherError, City } from '../types'
+import type { WeatherData, ForecastDay, HourlyForecast, WeatherError, City } from '../types'
 
 const REFRESH_INTERVAL = 10 * 60 * 1000
 
 interface UseWeatherResult {
   current: WeatherData | null
   forecast: ForecastDay[]
+  hourly: HourlyForecast[]
   isLoading: boolean
   error: WeatherError | null
   source: 'open-meteo' | 'openweathermap' | null
@@ -16,6 +17,7 @@ interface UseWeatherResult {
 export function useWeather(city: City): UseWeatherResult {
   const [current, setCurrent] = useState<WeatherData | null>(null)
   const [forecast, setForecast] = useState<ForecastDay[]>([])
+  const [hourly, setHourly] = useState<HourlyForecast[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<WeatherError | null>(null)
   const [source, setSource] = useState<'open-meteo' | 'openweathermap' | null>(null)
@@ -34,6 +36,7 @@ export function useWeather(city: City): UseWeatherResult {
       const data: WeatherResult = await fetchWeatherData(city, controller.signal)
       setCurrent(data.current)
       setForecast(data.forecast)
+      setHourly(data.hourly)
       setSource(data.source)
     } catch (err) {
       if (controller.signal.aborted) return
@@ -63,5 +66,5 @@ export function useWeather(city: City): UseWeatherResult {
     }
   }, [fetchData])
 
-  return { current, forecast, isLoading, error, source, refetch: fetchData }
+  return { current, forecast, hourly, isLoading, error, source, refetch: fetchData }
 }

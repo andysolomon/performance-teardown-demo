@@ -1,4 +1,4 @@
-import type { WeatherData, ForecastDay, WeatherError, WeatherErrorType, City } from '../types'
+import type { WeatherData, ForecastDay, HourlyForecast, WeatherError, WeatherErrorType, City } from '../types'
 
 const BASE_URL = 'https://api.open-meteo.com/v1'
 
@@ -79,12 +79,27 @@ interface OpenMeteoResponse {
     sunrise: string[]
     sunset: string[]
   }
+  hourly: {
+    time: string[]
+    temperature_2m: number[]
+    weather_code: number[]
+  }
   timezone: string
 }
 
-export async function fetchOpenMeteoWeather(city: City, signal?: AbortSignal): Promise<{ current: WeatherData; forecast: ForecastDay[] }> {
+function formatHour(isoDateTime: string): string {
+  const timePart = isoDateTime.split('T')[1]
+  if (!timePart) return '--'
+  const hour24 = Number.parseInt(timePart.split(':')[0], 10)
+  if (Number.isNaN(hour24)) return '--'
+  const suffix = hour24 >= 12 ? 'PM' : 'AM'
+  const hour12 = hour24 % 12 || 12
+  return `${hour12} ${suffix}`
+}
+
+export async function fetchOpenMeteoWeather(city: City, signal?: AbortSignal): Promise<{ current: WeatherData; forecast: ForecastDay[]; hourly: HourlyForecast[] }> {
   try {
-    const url = `${BASE_URL}/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,pressure_msl,apparent_temperature,wind_direction_10m,visibility,uv_index&daily=weather_code,temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,sunrise,sunset&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`
+    const url = `${BASE_URL}/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,pressure_msl,apparent_temperature,wind_direction_10m,visibility,uv_index&hourly=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,sunrise,sunset&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`
 
     const timeoutSignal = AbortSignal.timeout(10_000)
     const composedSignal = signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal
@@ -128,7 +143,19 @@ export async function fetchOpenMeteoWeather(city: City, signal?: AbortSignal): P
       conditionIcon: '01d',
     }))
 
-    return { current, forecast }
+    const nowHour = new Date().toISOString().slice(0, 13)
+    let startIndex = data.hourly.time.findIndex((t) => t.slice(0, 13) >= nowHour)
+    if (startIndex === -1) startIndex = 0
+    const hourly: HourlyForecast[] = data.hourly.time
+      .slice(startIndex, startIndex + 24)
+      .map((t, i) => ({
+        time: formatHour(t),
+        temperature: Math.round(data.hourly.temperature_2m[startIndex + i]),
+        conditions: getConditionFromCode(data.hourly.weather_code[startIndex + i]),
+        conditionIcon: '01d',
+      }))
+
+    return { current, forecast, hourly }
   } catch (error) {
     if ((error as WeatherError).type) {
       throw error

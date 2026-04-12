@@ -163,6 +163,117 @@ describe('WeatherPanel', () => {
     })
   })
 
+  describe('transition robustness', () => {
+    it('onTransitionEnd fires after panel close animation', async () => {
+      const onClose = vi.fn()
+      const { container, rerender } = render(
+        <WeatherPanel isOpen={true} onClose={onClose} cityName="Atlanta">
+          <div>content</div>
+        </WeatherPanel>
+      )
+
+      await act(async () => {
+        await new Promise((r) => requestAnimationFrame(r))
+      })
+
+      // Close the panel
+      fireEvent.click(screen.getByRole('button', { name: 'Close panel' }))
+
+      rerender(
+        <WeatherPanel isOpen={false} onClose={onClose} cityName="Atlanta">
+          <div>content</div>
+        </WeatherPanel>
+      )
+
+      // Simulate transitionend event on the panel element
+      const panel = container.querySelector('.weather-panel')!
+      fireEvent.transitionEnd(panel)
+
+      // Panel state should be clean (not expanded, not dragging)
+      expect(panel.classList.contains('expanded')).toBe(false)
+      expect(panel.classList.contains('dragging')).toBe(false)
+    })
+
+    it('handles rapid close/open without breaking state', async () => {
+      const onClose = vi.fn()
+      const { rerender } = render(
+        <WeatherPanel isOpen={true} onClose={onClose} cityName="Atlanta">
+          <div>Atlanta content</div>
+        </WeatherPanel>
+      )
+
+      await act(async () => {
+        await new Promise((r) => requestAnimationFrame(r))
+      })
+
+      // Close
+      fireEvent.click(screen.getByRole('button', { name: 'Close panel' }))
+
+      rerender(
+        <WeatherPanel isOpen={false} onClose={onClose} cityName="Atlanta">
+          <div>Atlanta content</div>
+        </WeatherPanel>
+      )
+
+      // Immediately reopen with different city (before transition completes)
+      rerender(
+        <WeatherPanel isOpen={true} onClose={onClose} cityName="Tokyo">
+          <div>Tokyo content</div>
+        </WeatherPanel>
+      )
+
+      await act(async () => {
+        await new Promise((r) => requestAnimationFrame(r))
+      })
+
+      // Panel should show the latest content
+      expect(screen.getByText('Tokyo')).toBeInTheDocument()
+      expect(screen.getByText('Tokyo content')).toBeInTheDocument()
+    })
+
+    it('all three close methods call the same handler', async () => {
+      const onClose = vi.fn()
+      const { container } = render(
+        <WeatherPanel isOpen={true} onClose={onClose} cityName="Atlanta">
+          <button>Inside</button>
+        </WeatherPanel>
+      )
+
+      await act(async () => {
+        await new Promise((r) => requestAnimationFrame(r))
+      })
+
+      // Method 1: Close button
+      fireEvent.click(screen.getByRole('button', { name: 'Close panel' }))
+      const closeButtonCalls = onClose.mock.calls.length
+      expect(closeButtonCalls).toBeGreaterThanOrEqual(1)
+
+      onClose.mockClear()
+
+      // Method 2: Backdrop click — need fresh render since isClosingRef blocks
+      const { container: c2, unmount: u2 } = render(
+        <WeatherPanel isOpen={true} onClose={onClose} cityName="Atlanta">
+          <button>Inside</button>
+        </WeatherPanel>
+      )
+      const backdrop = c2.querySelector('.weather-panel-backdrop')!
+      fireEvent.click(backdrop)
+      expect(onClose).toHaveBeenCalledTimes(1)
+      u2()
+
+      onClose.mockClear()
+
+      // Method 3: Escape key
+      render(
+        <WeatherPanel isOpen={true} onClose={onClose} cityName="Atlanta">
+          <button>Inside</button>
+        </WeatherPanel>
+      )
+      fireEvent.keyDown(document, { key: 'Escape' })
+      expect(onClose).toHaveBeenCalledTimes(1)
+    })
+  })
+
   describe('scroll lock', () => {
     it('sets body overflow to hidden when open', () => {
       renderPanel({ isOpen: true })

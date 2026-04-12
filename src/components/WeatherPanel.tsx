@@ -20,6 +20,7 @@ export function WeatherPanel({ isOpen, onClose, cityName, children }: WeatherPan
   const touchStart = useRef<{ y: number; time: number } | null>(null)
   const isMobileRef = useRef(false)
   const previousFocusRef = useRef<HTMLElement | null>(null)
+  const isClosingRef = useRef(false)
 
   useEffect(() => {
     const check = () => { isMobileRef.current = window.innerWidth <= 768 }
@@ -31,6 +32,7 @@ export function WeatherPanel({ isOpen, onClose, cityName, children }: WeatherPan
   // Focus-on-open + capture previous focus for restore
   useEffect(() => {
     if (isOpen) {
+      isClosingRef.current = false
       previousFocusRef.current = document.activeElement as HTMLElement | null
       requestAnimationFrame(() => {
         const panel = panelRef.current
@@ -57,6 +59,8 @@ export function WeatherPanel({ isOpen, onClose, cityName, children }: WeatherPan
 
   // Focus restore on close
   const handleClose = useCallback(() => {
+    if (isClosingRef.current) return
+    isClosingRef.current = true
     const elToRestore = previousFocusRef.current
     onClose()
     requestAnimationFrame(() => {
@@ -143,6 +147,13 @@ export function WeatherPanel({ isOpen, onClose, cityName, children }: WeatherPan
     touchStart.current = null
   }, [translateY, expanded, handleClose])
 
+  const handleTransitionEnd = useCallback((e: React.TransitionEvent) => {
+    if (e.target !== panelRef.current) return
+    if (!isOpen) {
+      isClosingRef.current = false
+    }
+  }, [isOpen])
+
   // Prevent body scroll when panel is open (all viewports)
   useEffect(() => {
     if (isOpen) {
@@ -171,6 +182,7 @@ export function WeatherPanel({ isOpen, onClose, cityName, children }: WeatherPan
         aria-modal="true"
         aria-labelledby={headingId}
         tabIndex={-1}
+        onTransitionEnd={handleTransitionEnd}
       >
         <div
           className="weather-panel-handle"

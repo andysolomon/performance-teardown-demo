@@ -283,4 +283,78 @@ describe('Dashboard', () => {
     expect(screen.getByText('Conditions Distribution Data')).toBeInTheDocument()
     expect(screen.getByText('Humidity Forecast Data')).toBeInTheDocument()
   })
+
+  it('loading state has role="status" with accessible label', () => {
+    render(
+      <Dashboard
+        current={null}
+        forecast={[]}
+        isLoading={true}
+        error={null}
+        source={null}
+        onRetry={vi.fn()}
+        city={DEFAULT_CITY}
+        onCityChange={vi.fn()}
+      />
+    )
+
+    const statusEl = screen.getByRole('status')
+    expect(statusEl).toHaveAttribute('aria-label', 'Loading weather data')
+  })
+
+  it('error state has role="alert"', () => {
+    const error = { type: 'network' as const, message: 'Connection failed' }
+    render(
+      <Dashboard
+        current={null}
+        forecast={[]}
+        isLoading={false}
+        error={error}
+        source={null}
+        onRetry={vi.fn()}
+        city={DEFAULT_CITY}
+        onCityChange={vi.fn()}
+      />
+    )
+
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('Connection failed')
+  })
+
+  it('announces weather data updated on refresh, not initial load', () => {
+    const { rerender } = render(
+      <Dashboard
+        current={mockCurrent}
+        forecast={mockForecast}
+        isLoading={false}
+        error={null}
+        source="open-meteo"
+        onRetry={vi.fn()}
+        city={DEFAULT_CITY}
+        onCityChange={vi.fn()}
+      />
+    )
+
+    // Initial load — announcement region should be empty
+    const dashboard = document.querySelector('.dashboard')!
+    const liveRegion = dashboard.querySelector('[aria-live="polite"]')!
+    expect(liveRegion.textContent).toBe('')
+
+    // Simulate data refresh
+    const updatedCurrent = { ...mockCurrent, temperature: 75, lastUpdated: '12:05 PM' }
+    rerender(
+      <Dashboard
+        current={updatedCurrent}
+        forecast={mockForecast}
+        isLoading={false}
+        error={null}
+        source="open-meteo"
+        onRetry={vi.fn()}
+        city={DEFAULT_CITY}
+        onCityChange={vi.fn()}
+      />
+    )
+
+    expect(liveRegion.textContent).toBe('Weather data updated')
+  })
 })

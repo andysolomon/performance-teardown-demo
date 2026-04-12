@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -48,6 +48,8 @@ interface DashboardProps {
 
 export function Dashboard({ current, forecast, isLoading, error, source, onRetry, city, onCityChange }: DashboardProps) {
   const [units, setUnits] = useState<UnitSystem>(getStoredUnits)
+  const hasLoadedRef = useRef(false)
+  const [announcement, setAnnouncement] = useState('')
 
   const handleUnitToggle = (newUnits: UnitSystem) => {
     setUnits(newUnits)
@@ -65,6 +67,17 @@ export function Dashboard({ current, forecast, isLoading, error, source, onRetry
     mq.addEventListener('change', handler)
     return () => mq.removeEventListener('change', handler)
   }, [])
+
+  useEffect(() => {
+    if (current && !isLoading) {
+      if (hasLoadedRef.current) {
+        setAnnouncement('Weather data updated')
+        const timer = setTimeout(() => setAnnouncement(''), 3000)
+        return () => clearTimeout(timer)
+      }
+      hasLoadedRef.current = true
+    }
+  }, [current, isLoading])
 
   const textColor = isDark ? '#9ca3af' : '#6b6375'
   const gridColor = isDark ? '#2e303a' : '#e5e4e7'
@@ -225,13 +238,17 @@ export function Dashboard({ current, forecast, isLoading, error, source, onRetry
   }, [forecast])
 
   if (isLoading) {
-    return <PanelSkeleton />
+    return (
+      <div role="status" aria-label="Loading weather data">
+        <PanelSkeleton />
+      </div>
+    )
   }
 
   if (error) {
     return (
       <div className="dashboard">
-        <div className="error-state">
+        <div className="error-state" role="alert">
           <h2>Unable to load weather data</h2>
           <p>{error.message}</p>
           <button onClick={onRetry} className="retry-button">
@@ -349,6 +366,10 @@ export function Dashboard({ current, forecast, isLoading, error, source, onRetry
           <span className="info-value">{current.pressure} hPa</span>
         </div>
       </section>
+
+      <div className="sr-only" aria-live="polite" role="status">
+        {announcement}
+      </div>
     </div>
   )
 }

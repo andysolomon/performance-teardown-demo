@@ -1,5 +1,6 @@
-import { useMemo, useState, useCallback, useRef } from 'react'
+import { useMemo, useState, useCallback, useRef, useEffect } from 'react'
 import Map, { Marker } from 'react-map-gl/mapbox'
+import type { MapRef } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { CITIES_FOR_MARKERS, type City } from '../types'
 import './MapView.css'
@@ -29,8 +30,33 @@ export function MapView({ selectedCityId, onCitySelect, onDeselect, markerRefs: 
   const [mapError, setMapError] = useState<string | null>(null)
   const internalRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const refs = externalRefs ?? internalRefs
+  const mapRef = useRef<MapRef>(null)
 
   const mapboxToken = useMemo(() => getMapboxToken(), [])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+
+    if (selectedCityId) {
+      const city = CITIES_FOR_MARKERS.find((c) => c.id === selectedCityId)
+      if (city) {
+        map.flyTo({
+          center: [city.lon, city.lat],
+          zoom: 4.5,
+          duration: 1800,
+          essential: true,
+        })
+      }
+    } else {
+      map.flyTo({
+        center: [INITIAL_VIEW_STATE.longitude, INITIAL_VIEW_STATE.latitude],
+        zoom: INITIAL_VIEW_STATE.zoom,
+        duration: 1800,
+        essential: true,
+      })
+    }
+  }, [selectedCityId])
 
   const handleMapLoad = useCallback((event: { target: mapboxgl.Map }) => {
     const map = event.target
@@ -151,6 +177,7 @@ export function MapView({ selectedCityId, onCitySelect, onDeselect, markerRefs: 
   return (
     <div className="map-container">
       <Map
+        ref={mapRef}
         mapboxAccessToken={mapboxToken}
         initialViewState={INITIAL_VIEW_STATE}
         mapStyle="mapbox://styles/mapbox/light-v11"

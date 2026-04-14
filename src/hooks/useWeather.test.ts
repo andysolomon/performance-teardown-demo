@@ -4,8 +4,13 @@ import { useWeather } from './useWeather'
 import type { City, WeatherError } from '../types'
 
 vi.mock('../services/weatherApi')
+vi.mock('../services/weatherCache', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../services/weatherCache')>()
+  return { ...actual }
+})
 
 import { fetchWeatherData } from '../services/weatherApi'
+import { clearCache } from '../services/weatherCache'
 
 const mockedFetch = vi.mocked(fetchWeatherData)
 
@@ -70,6 +75,8 @@ function makeResult(cityName: string, country: string, source: 'open-meteo' | 'o
 
 afterEach(() => {
   vi.restoreAllMocks()
+  clearCache('atlanta')
+  clearCache('tokyo')
 })
 
 describe('useWeather', () => {
@@ -262,6 +269,138 @@ describe('useWeather', () => {
       })
 
       expect(mockedFetch.mock.calls.length).toBe(callsAfterUnmount)
+    })
+  })
+
+  describe('caching', () => {
+    it('shows cached data instantly without loading on revisit', async () => {
+      mockedFetch.mockResolvedValue(makeResult('Atlanta', 'US'))
+
+      const { result, unmount } = renderHook(() => useWeather(atlanta))
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
+      unmount()
+
+      mockedFetch.mockClear()
+      mockedFetch.mockResolvedValue(makeResult('Atlanta', 'US'))
+
+      const { result: result2 } = renderHook(() => useWeather(atlanta))
+
+      expect(result2.current.isLoading).toBe(false)
+      expect(result2.current.current?.location).toBe('Atlanta, US')
+    })
+
+    it('background refresh updates data when cache is stale', async () => {
+      mockedFetch.mockResolvedValue(makeResult('Atlanta', 'US'))
+
+      const { result, unmount } = renderHook(() => useWeather(atlanta))
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
+      unmount()
+
+      // Make cache stale
+      const { getCache } = await import('../services/weatherCache')
+      const entry = getCache('atlanta')!
+      entry.timestamp = Date.now() - 11 * 60 * 1000
+
+      mockedFetch.mockResolvedValue(makeResult('Atlanta Updated', 'US'))
+
+      const { result: result2 } = renderHook(() => useWeather(atlanta))
+
+      expect(result2.current.isLoading).toBe(false)
+      expect(result2.current.current?.location).toBe('Atlanta, US')
+      expect(result2.current.isRefreshing).toBe(true)
+
+      await waitFor(() => {
+        expect(result2.current.isRefreshing).toBe(false)
+      })
+
+      expect(result2.current.current?.location).toBe('Atlanta Updated, US')
+    })
+
+    it('failed background refresh preserves cache and sets isStale', async () => {
+      mockedFetch.mockResolvedValue(makeResult('Atlanta', 'US'))
+
+      const { result, unmount } = renderHook(() => useWeather(atlanta))
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
+      unmount()
+
+      // Make cache stale
+      const { getCache } = await import('../services/weatherCache')
+      const entry = getCache('atlanta')!
+      entry.timestamp = Date.now() - 11 * 60 * 1000
+
+      const weatherError: WeatherError = { type: 'network', message: 'Network error.' }
+      mockedFetch.mockRejectedValue(weatherError)
+
+      const { result: result2 } = renderHook(() => useWeather(atlanta))
+
+      await waitFor(() => {
+        expect(result2.current.isRefreshing).toBe(false)
+      })
+
+      expect(result2.current.current?.location).toBe('Atlanta, US')
+      expect(result2.current.isStale).toBe(true)
+      expect(result2.current.error).toBeNull()
+    })
+
+    it('manual refetch bypasses cache', async () => {
+      mockedFetch.mockResolvedValue(makeResult('Atlanta', 'US'))
+
+      const { result } = renderHook(() => useWeather(atlanta))
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
+      mockedFetch.mockResolvedValue(makeResult('Atlanta Fresh', 'US'))
+
+      await act(async () => {
+        await result.current.refetch()
+      })
+
+      expect(result.current.current?.location).toBe('Atlanta Fresh, US')
+    })
+
+    it('switching cities reuses cache', async () => {
+      mockedFetch.mockImplementation(async (city) => {
+        if (city.id === 'atlanta') return makeResult('Atlanta', 'US')
+        return makeResult('Tokyo', 'JP')
+      })
+
+      const { result, rerender } = renderHook(
+        ({ city }) => useWeather(city),
+        { initialProps: { city: atlanta } },
+      )
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
+      rerender({ city: tokyo })
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
+      expect(result.current.current?.location).toBe('Tokyo, JP')
+
+      mockedFetch.mockClear()
+
+      rerender({ city: atlanta })
+
+      expect(result.current.isLoading).toBe(false)
+      expect(result.current.current?.location).toBe('Atlanta, US')
     })
   })
 })

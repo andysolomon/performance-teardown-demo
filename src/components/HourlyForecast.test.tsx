@@ -35,4 +35,21 @@ describe('HourlyForecast', () => {
     // 72°F = 22°C
     expect(screen.getByLabelText(/3 PM: 22°C, Clear/)).toBeInTheDocument()
   })
+
+  it('shows limited data note when fewer than 24 hours', () => {
+    render(<HourlyForecast hours={mockHours} units="imperial" />)
+    expect(screen.getByText(/Limited hourly data available/)).toBeInTheDocument()
+    expect(screen.getByText(/3 of 24 hours/)).toBeInTheDocument()
+  })
+
+  it('does not show limited data note when 24 hours present', () => {
+    const fullHours: HourlyForecastType[] = Array.from({ length: 24 }, (_, i) => ({
+      time: `${(i % 12) || 12} ${i < 12 ? 'AM' : 'PM'}`,
+      temperature: 60 + i,
+      conditions: 'Clear',
+      conditionIcon: '01d',
+    }))
+    render(<HourlyForecast hours={fullHours} units="imperial" />)
+    expect(screen.queryByText(/Limited hourly data available/)).not.toBeInTheDocument()
+  })
 })

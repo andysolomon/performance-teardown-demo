@@ -10,9 +10,14 @@ interface HourlyForecastProps {
 export function HourlyForecast({ hours, units }: HourlyForecastProps) {
   if (hours.length === 0) return null
 
+  const isLimited = hours.length > 0 && hours.length < 24
+
   return (
     <section className="hourly-forecast" aria-label="Hourly Forecast">
       <h2>Next 24 Hours</h2>
+      {isLimited && (
+        <p className="hourly-limited">Limited hourly data available ({hours.length} of 24 hours)</p>
+      )}
       <div className="hourly-scroll">
         {hours.map((hour) => (
           <div

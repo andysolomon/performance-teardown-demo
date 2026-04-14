@@ -62,6 +62,9 @@ describe('fetchWeatherData', () => {
       lastUpdated: '12:00 PM',
     },
     forecast: [],
+    hourly: [
+      { time: '3 PM', temperature: 72, conditions: 'Clear', conditionIcon: '01d' },
+    ],
   }
 
   it('returns open-meteo source when primary succeeds', async () => {
@@ -92,6 +95,14 @@ describe('fetchWeatherData', () => {
     })
 
     await expect(fetchWeatherData(testCity)).rejects.toMatchObject({ type: 'network' })
+  })
+
+  it('passes hourly data through from open-meteo', async () => {
+    mockedFetchOpenMeteo.mockResolvedValue(mockWeatherResult)
+
+    const result = await fetchWeatherData(testCity)
+
+    expect(result.hourly).toEqual(mockWeatherResult.hourly)
   })
 
   it('propagates timeout error from primary', async () => {

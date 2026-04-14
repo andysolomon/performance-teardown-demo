@@ -13,8 +13,9 @@ import {
   Filler,
 } from 'chart.js'
 import { Line, Pie, Bar } from 'react-chartjs-2'
-import type { WeatherData, ForecastDay, WeatherError, WeatherMetric, ChartData, City } from '../types'
+import type { WeatherData, ForecastDay, HourlyForecast as HourlyForecastType, WeatherError, WeatherMetric, ChartData, City } from '../types'
 import { MetricCard } from './MetricCard'
+import { HourlyForecast } from './HourlyForecast'
 import { CityPicker } from './CityPicker'
 import { UnitToggle } from './UnitToggle'
 import { PanelSkeleton } from './PanelSkeleton'
@@ -38,6 +39,7 @@ ChartJS.register(
 interface DashboardProps {
   current: WeatherData | null
   forecast: ForecastDay[]
+  hourly: HourlyForecastType[]
   isLoading: boolean
   error: WeatherError | null
   source: 'open-meteo' | 'openweathermap' | null
@@ -46,7 +48,7 @@ interface DashboardProps {
   onCityChange: (city: City) => void
 }
 
-export function Dashboard({ current, forecast, isLoading, error, source, onRetry, city, onCityChange }: DashboardProps) {
+export function Dashboard({ current, forecast, hourly, isLoading, error, source, onRetry, city, onCityChange }: DashboardProps) {
   const [units, setUnits] = useState<UnitSystem>(getStoredUnits)
 
   const handleUnitToggle = (newUnits: UnitSystem) => {
@@ -278,6 +280,8 @@ export function Dashboard({ current, forecast, isLoading, error, source, onRetry
           <MetricCard key={metric.id} metric={metric} />
         ))}
       </section>
+
+      <HourlyForecast hours={hourly} units={units} />
 
       <section className="charts-section" aria-label="Forecast Charts">
         <div className="chart-container large">

@@ -1,5 +1,19 @@
 import type { Page } from '@playwright/test'
 
+function buildHourlyFixture() {
+  const time: string[] = []
+  const temperature_2m: number[] = []
+  const weather_code: number[] = []
+  for (let i = 0; i < 168; i++) {
+    const d = new Date('2025-03-13T00:00')
+    d.setHours(d.getHours() + i)
+    time.push(d.toISOString().slice(0, 16))
+    temperature_2m.push(50 + (i % 24))
+    weather_code.push(i % 3 === 0 ? 0 : i % 3 === 1 ? 2 : 61)
+  }
+  return { time, temperature_2m, weather_code }
+}
+
 export const OPEN_METEO_FIXTURE = {
   current: {
     temperature_2m: 72,
@@ -21,6 +35,7 @@ export const OPEN_METEO_FIXTURE = {
     sunrise: ['2025-03-13T06:30', '2025-03-14T06:29', '2025-03-15T06:28', '2025-03-16T06:27', '2025-03-17T06:26'],
     sunset: ['2025-03-13T19:45', '2025-03-14T19:46', '2025-03-15T19:47', '2025-03-16T19:48', '2025-03-17T19:49'],
   },
+  hourly: buildHourlyFixture(),
   timezone: 'America/New_York',
 }
 

@@ -17,7 +17,7 @@ function App() {
   const markerRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const lastSelectedRef = useRef<string | null>(null)
   const activeCity = selectedCity ?? DEFAULT_CITY
-  const { current, forecast, isLoading, error, source, refetch } = useWeather(activeCity)
+  const { current, forecast, hourly, isLoading, error, source, refetch } = useWeather(activeCity)
 
   // Sync URL → state on popstate (back/forward)
   useEffect(() => {
@@ -76,6 +76,7 @@ function App() {
             <Dashboard
               current={current}
               forecast={forecast}
+              hourly={hourly}
               isLoading={isLoading}
               error={error}
               source={source}

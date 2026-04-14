@@ -94,6 +94,15 @@ test.describe('Weather Panel Content', () => {
     await expect(page.getByRole('heading', { name: 'Wind Speed', exact: true })).toBeVisible()
   })
 
+  test('displays hourly forecast section', async ({ page }) => {
+    await page.goto('/?city=atlanta')
+
+    await expect(page.locator('.hourly-forecast')).toBeVisible({ timeout: 15000 })
+    await expect(page.getByRole('heading', { name: 'Next 24 Hours' })).toBeVisible()
+    // Should have at least one hourly item
+    await expect(page.locator('.hourly-item').first()).toBeVisible()
+  })
+
   test('displays chart sections', async ({ page }) => {
     await page.goto('/?city=atlanta')
 

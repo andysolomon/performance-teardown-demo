@@ -173,6 +173,13 @@ export interface ForecastDay {
   conditionIcon: string
 }
 
+export interface HourlyForecast {
+  time: string
+  temperature: number
+  conditions: string
+  conditionIcon: string
+}
+
 export interface WeatherApiResponse {
   current: WeatherData
   forecast: ForecastDay[]

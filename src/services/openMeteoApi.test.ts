@@ -93,6 +93,15 @@ describe('fetchOpenMeteoWeather', () => {
       sunrise: ['2024-03-13T06:30', '2024-03-14T06:29', '2024-03-15T06:28', '2024-03-16T06:27', '2024-03-17T06:26', '2024-03-18T06:25'],
       sunset: ['2024-03-13T19:45', '2024-03-14T19:46', '2024-03-15T19:47', '2024-03-16T19:48', '2024-03-17T19:49', '2024-03-18T19:50'],
     },
+    hourly: {
+      time: Array.from({ length: 168 }, (_, i) => {
+        const d = new Date('2024-03-13T00:00')
+        d.setHours(d.getHours() + i)
+        return d.toISOString().slice(0, 16).replace(':00', ':00')
+      }),
+      temperature_2m: Array.from({ length: 168 }, (_, i) => 50 + (i % 24)),
+      weather_code: Array.from({ length: 168 }, (_, i) => (i % 3 === 0 ? 0 : i % 3 === 1 ? 2 : 61)),
+    },
     timezone: 'America/New_York',
   }
 
@@ -212,5 +221,44 @@ describe('fetchOpenMeteoWeather', () => {
     await fetchOpenMeteoWeather(testCity)
 
     expect(randomSpy).not.toHaveBeenCalled()
+  })
+
+  describe('hourly data parsing', () => {
+    it('includes hourly data in the result', async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockOpenMeteoResponse),
+      })
+
+      const result = await fetchOpenMeteoWeather(testCity)
+
+      expect(result.hourly).toBeDefined()
+      expect(Array.isArray(result.hourly)).toBe(true)
+      expect(result.hourly.length).toBeGreaterThan(0)
+    })
+
+    it('returns up to 24 hourly items', async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockOpenMeteoResponse),
+      })
+
+      const result = await fetchOpenMeteoWeather(testCity)
+
+      expect(result.hourly.length).toBeLessThanOrEqual(24)
+    })
+
+    it('maps conditions from weather codes', async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockOpenMeteoResponse),
+      })
+
+      const result = await fetchOpenMeteoWeather(testCity)
+
+      for (const hour of result.hourly) {
+        expect(['Clear', 'Clouds', 'Fog', 'Drizzle', 'Rain', 'Snow', 'Thunderstorm']).toContain(hour.conditions)
+      }
+    })
   })
 })

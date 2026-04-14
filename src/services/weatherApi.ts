@@ -1,4 +1,4 @@
-import type { WeatherData, ForecastDay, WeatherError, WeatherErrorType, City } from '../types'
+import type { WeatherData, ForecastDay, HourlyForecast, WeatherError, WeatherErrorType, City } from '../types'
 import { fetchOpenMeteoWeather } from './openMeteoApi'
 
 const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY
@@ -47,7 +47,7 @@ interface ForecastResponse {
   city: { name: string; country: string; sunrise: number; sunset: number; timezone: number }
 }
 
-async function fetchOpenWeatherMapData(city: City, signal?: AbortSignal): Promise<{ current: WeatherData; forecast: ForecastDay[] }> {
+async function fetchOpenWeatherMapData(city: City, signal?: AbortSignal): Promise<{ current: WeatherData; forecast: ForecastDay[]; hourly: HourlyForecast[] }> {
   if (!API_KEY) {
     throw { type: 'invalid_key' as WeatherErrorType, message: 'OpenWeatherMap API key not configured.' }
   }
@@ -89,7 +89,20 @@ async function fetchOpenWeatherMapData(city: City, signal?: AbortSignal): Promis
     lastUpdated: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
   }
 
-  return { current, forecast: aggregateForecasts(forecastData.list) }
+  const hourly: HourlyForecast[] = forecastData.list.slice(0, 8).map((item) => {
+    const date = new Date(item.dt * 1000)
+    const hour24 = date.getHours()
+    const suffix = hour24 >= 12 ? 'PM' : 'AM'
+    const hour12 = hour24 % 12 || 12
+    return {
+      time: `${hour12} ${suffix}`,
+      temperature: Math.round(item.main.temp),
+      conditions: item.weather[0].main,
+      conditionIcon: item.weather[0].icon,
+    }
+  })
+
+  return { current, forecast: aggregateForecasts(forecastData.list), hourly }
 }
 
 const CONDITION_SEVERITY: Record<string, number> = {
@@ -158,6 +171,7 @@ export function aggregateForecasts(list: ForecastResponse['list']): ForecastDay[
 export interface WeatherResult {
   current: WeatherData
   forecast: ForecastDay[]
+  hourly: HourlyForecast[]
   source: 'open-meteo' | 'openweathermap'
 }
 

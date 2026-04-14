@@ -37,6 +37,7 @@ describe('Dashboard', () => {
       <Dashboard
         current={null}
         forecast={[]}
+        hourly={[]}
         isLoading={true}
         error={null}
         source={null}
@@ -57,6 +58,7 @@ describe('Dashboard', () => {
       <Dashboard
         current={null}
         forecast={[]}
+        hourly={[]}
         isLoading={false}
         error={error}
         source={null}
@@ -75,6 +77,7 @@ describe('Dashboard', () => {
       <Dashboard
         current={mockCurrent}
         forecast={mockForecast}
+        hourly={[]}
         isLoading={false}
         error={null}
         source="open-meteo"
@@ -94,6 +97,7 @@ describe('Dashboard', () => {
       <Dashboard
         current={mockCurrent}
         forecast={mockForecast}
+        hourly={[]}
         isLoading={false}
         error={null}
         source="open-meteo"
@@ -115,6 +119,7 @@ describe('Dashboard', () => {
       <Dashboard
         current={currentWithoutUV}
         forecast={mockForecast}
+        hourly={[]}
         isLoading={false}
         error={null}
         source="openweathermap"
@@ -135,6 +140,7 @@ describe('Dashboard', () => {
       <Dashboard
         current={mockCurrent}
         forecast={mockForecast}
+        hourly={[]}
         isLoading={false}
         error={null}
         source="open-meteo"
@@ -154,6 +160,7 @@ describe('Dashboard', () => {
       <Dashboard
         current={mockCurrent}
         forecast={mockForecast}
+        hourly={[]}
         isLoading={false}
         error={null}
         source="open-meteo"
@@ -174,6 +181,7 @@ describe('Dashboard', () => {
       <Dashboard
         current={mockCurrent}
         forecast={mockForecast}
+        hourly={[]}
         isLoading={false}
         error={null}
         source="open-meteo"
@@ -193,6 +201,7 @@ describe('Dashboard', () => {
       <Dashboard
         current={mockCurrent}
         forecast={[]}
+        hourly={[]}
         isLoading={false}
         error={null}
         source="open-meteo"
@@ -216,6 +225,7 @@ describe('Dashboard', () => {
       <Dashboard
         current={mockCurrent}
         forecast={[]}
+        hourly={[]}
         isLoading={false}
         error={null}
         source="open-meteo"
@@ -235,6 +245,7 @@ describe('Dashboard', () => {
       <Dashboard
         current={mockCurrent}
         forecast={mockForecast}
+        hourly={[]}
         isLoading={false}
         error={null}
         source="open-meteo"
@@ -252,6 +263,7 @@ describe('Dashboard', () => {
       <Dashboard
         current={mockCurrent}
         forecast={mockForecast}
+        hourly={[]}
         isLoading={false}
         error={null}
         source="open-meteo"
@@ -270,6 +282,7 @@ describe('Dashboard', () => {
       <Dashboard
         current={mockCurrent}
         forecast={mockForecast}
+        hourly={[]}
         isLoading={false}
         error={null}
         source="open-meteo"

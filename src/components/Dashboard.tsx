@@ -41,6 +41,8 @@ interface DashboardProps {
   forecast: ForecastDay[]
   hourly: HourlyForecastType[]
   isLoading: boolean
+  isRefreshing: boolean
+  isStale: boolean
   error: WeatherError | null
   source: 'open-meteo' | 'openweathermap' | null
   onRetry: () => void
@@ -48,7 +50,7 @@ interface DashboardProps {
   onCityChange: (city: City) => void
 }
 
-export function Dashboard({ current, forecast, hourly, isLoading, error, source, onRetry, city, onCityChange }: DashboardProps) {
+export function Dashboard({ current, forecast, hourly, isLoading, isRefreshing, isStale, error, source, onRetry, city, onCityChange }: DashboardProps) {
   const [units, setUnits] = useState<UnitSystem>(getStoredUnits)
 
   const handleUnitToggle = (newUnits: UnitSystem) => {
@@ -268,6 +270,8 @@ export function Dashboard({ current, forecast, hourly, isLoading, error, source,
         </div>
         <p className="dashboard-subtitle">
           {current.location} • Updated {current.lastUpdated}
+          {isRefreshing && <span className="refreshing-indicator"> • Refreshing…</span>}
+          {isStale && <span className="stale-indicator"> • Data may be outdated</span>}
           {source && <span className="data-source"> • {source === 'open-meteo' ? 'Open-Meteo' : 'OpenWeatherMap'}</span>}
         </p>
         <p className="current-conditions">

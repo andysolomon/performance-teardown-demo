@@ -39,6 +39,8 @@ describe('Dashboard', () => {
         forecast={[]}
         hourly={[]}
         isLoading={true}
+        isRefreshing={false}
+        isStale={false}
         error={null}
         source={null}
         onRetry={vi.fn()}
@@ -60,6 +62,8 @@ describe('Dashboard', () => {
         forecast={[]}
         hourly={[]}
         isLoading={false}
+        isRefreshing={false}
+        isStale={false}
         error={error}
         source={null}
         onRetry={vi.fn()}
@@ -79,6 +83,8 @@ describe('Dashboard', () => {
         forecast={mockForecast}
         hourly={[]}
         isLoading={false}
+        isRefreshing={false}
+        isStale={false}
         error={null}
         source="open-meteo"
         onRetry={vi.fn()}
@@ -99,6 +105,8 @@ describe('Dashboard', () => {
         forecast={mockForecast}
         hourly={[]}
         isLoading={false}
+        isRefreshing={false}
+        isStale={false}
         error={null}
         source="open-meteo"
         onRetry={vi.fn()}
@@ -121,6 +129,8 @@ describe('Dashboard', () => {
         forecast={mockForecast}
         hourly={[]}
         isLoading={false}
+        isRefreshing={false}
+        isStale={false}
         error={null}
         source="openweathermap"
         onRetry={vi.fn()}
@@ -142,6 +152,8 @@ describe('Dashboard', () => {
         forecast={mockForecast}
         hourly={[]}
         isLoading={false}
+        isRefreshing={false}
+        isStale={false}
         error={null}
         source="open-meteo"
         onRetry={vi.fn()}
@@ -162,6 +174,8 @@ describe('Dashboard', () => {
         forecast={mockForecast}
         hourly={[]}
         isLoading={false}
+        isRefreshing={false}
+        isStale={false}
         error={null}
         source="open-meteo"
         onRetry={vi.fn()}
@@ -183,6 +197,8 @@ describe('Dashboard', () => {
         forecast={mockForecast}
         hourly={[]}
         isLoading={false}
+        isRefreshing={false}
+        isStale={false}
         error={null}
         source="open-meteo"
         onRetry={vi.fn()}
@@ -203,6 +219,8 @@ describe('Dashboard', () => {
         forecast={[]}
         hourly={[]}
         isLoading={false}
+        isRefreshing={false}
+        isStale={false}
         error={null}
         source="open-meteo"
         onRetry={vi.fn()}
@@ -227,6 +245,8 @@ describe('Dashboard', () => {
         forecast={[]}
         hourly={[]}
         isLoading={false}
+        isRefreshing={false}
+        isStale={false}
         error={null}
         source="open-meteo"
         onRetry={vi.fn()}
@@ -247,6 +267,8 @@ describe('Dashboard', () => {
         forecast={mockForecast}
         hourly={[]}
         isLoading={false}
+        isRefreshing={false}
+        isStale={false}
         error={null}
         source="open-meteo"
         onRetry={vi.fn()}
@@ -265,6 +287,8 @@ describe('Dashboard', () => {
         forecast={mockForecast}
         hourly={[]}
         isLoading={false}
+        isRefreshing={false}
+        isStale={false}
         error={null}
         source="open-meteo"
         onRetry={vi.fn()}
@@ -284,6 +308,8 @@ describe('Dashboard', () => {
         forecast={mockForecast}
         hourly={[]}
         isLoading={false}
+        isRefreshing={false}
+        isStale={false}
         error={null}
         source="open-meteo"
         onRetry={vi.fn()}
@@ -295,5 +321,68 @@ describe('Dashboard', () => {
     expect(screen.getByText('Temperature Trend Data')).toBeInTheDocument()
     expect(screen.getByText('Conditions Distribution Data')).toBeInTheDocument()
     expect(screen.getByText('Humidity Forecast Data')).toBeInTheDocument()
+  })
+
+  it('shows refreshing indicator when isRefreshing is true', () => {
+    render(
+      <Dashboard
+        current={mockCurrent}
+        forecast={mockForecast}
+        hourly={[]}
+        isLoading={false}
+        isRefreshing={true}
+        isStale={false}
+        error={null}
+        source="open-meteo"
+        onRetry={vi.fn()}
+        city={DEFAULT_CITY}
+        onCityChange={vi.fn()}
+      />
+    )
+
+    expect(screen.getByText(/Refreshing…/)).toBeInTheDocument()
+    expect(screen.queryByText(/Data may be outdated/)).not.toBeInTheDocument()
+  })
+
+  it('shows stale indicator when isStale is true', () => {
+    render(
+      <Dashboard
+        current={mockCurrent}
+        forecast={mockForecast}
+        hourly={[]}
+        isLoading={false}
+        isRefreshing={false}
+        isStale={true}
+        error={null}
+        source="open-meteo"
+        onRetry={vi.fn()}
+        city={DEFAULT_CITY}
+        onCityChange={vi.fn()}
+      />
+    )
+
+    expect(screen.getByText(/Data may be outdated/)).toBeInTheDocument()
+    expect(screen.queryByText(/Refreshing…/)).not.toBeInTheDocument()
+  })
+
+  it('hides refresh and stale indicators when both are false', () => {
+    render(
+      <Dashboard
+        current={mockCurrent}
+        forecast={mockForecast}
+        hourly={[]}
+        isLoading={false}
+        isRefreshing={false}
+        isStale={false}
+        error={null}
+        source="open-meteo"
+        onRetry={vi.fn()}
+        city={DEFAULT_CITY}
+        onCityChange={vi.fn()}
+      />
+    )
+
+    expect(screen.queryByText(/Refreshing…/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Data may be outdated/)).not.toBeInTheDocument()
   })
 })

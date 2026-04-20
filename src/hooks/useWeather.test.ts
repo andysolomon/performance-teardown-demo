@@ -70,6 +70,7 @@ function makeResult(cityName: string, country: string, source: 'open-meteo' | 'o
       },
     ],
     source,
+    hourly: [],
   }
 }
 

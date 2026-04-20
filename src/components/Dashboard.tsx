@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -52,11 +52,20 @@ interface DashboardProps {
 
 export function Dashboard({ current, forecast, hourly, isLoading, isRefreshing, isStale, error, source, onRetry, city, onCityChange }: DashboardProps) {
   const [units, setUnits] = useState<UnitSystem>(getStoredUnits)
+  const [activeTab, setActiveTab] = useState<'hourly' | '5-day'>('5-day')
+  const [copied, setCopied] = useState(false)
 
   const handleUnitToggle = (newUnits: UnitSystem) => {
     setUnits(newUnits)
     setStoredUnits(newUnits)
   }
+
+  const handleCopyLink = useCallback(() => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }, [])
 
   const [isDark, setIsDark] = useState(() => {
     if (typeof window === 'undefined') return false
@@ -77,6 +86,10 @@ export function Dashboard({ current, forecast, hourly, isLoading, isRefreshing, 
     () => ({
       responsive: true,
       maintainAspectRatio: false,
+      animation: {
+        duration: 800,
+        easing: 'easeOutQuart' as const,
+      },
       plugins: {
         legend: {
           position: 'bottom' as const,
@@ -114,6 +127,10 @@ export function Dashboard({ current, forecast, hourly, isLoading, isRefreshing, 
     () => ({
       responsive: true,
       maintainAspectRatio: false,
+      animation: {
+        duration: 800,
+        easing: 'easeOutQuart' as const,
+      },
       plugins: {
         legend: {
           position: 'bottom' as const,
@@ -228,6 +245,24 @@ export function Dashboard({ current, forecast, hourly, isLoading, isRefreshing, 
     }
   }, [forecast])
 
+  const hourlyChartData: ChartData | null = useMemo(() => {
+    if (hourly.length === 0) return null
+    return {
+      labels: hourly.map((h) => h.time),
+      datasets: [
+        {
+          label: `Temperature (${tempUnit(units)})`,
+          data: hourly.map((h) => convertTemp(h.temperature, units)),
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          borderColor: 'rgba(239, 68, 68, 1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+        },
+      ],
+    }
+  }, [hourly, units])
+
   if (isLoading) {
     return <PanelSkeleton />
   }
@@ -266,6 +301,9 @@ export function Dashboard({ current, forecast, hourly, isLoading, isRefreshing, 
           <div className="header-controls">
             <CityPicker selectedCity={city} onCityChange={onCityChange} />
             <UnitToggle units={units} onToggle={handleUnitToggle} />
+            <button className="share-button" onClick={handleCopyLink} aria-label="Copy link to clipboard">
+              {copied ? '✓ Link copied!' : '🔗 Share'}
+            </button>
           </div>
         </div>
         <p className="dashboard-subtitle">
@@ -287,56 +325,101 @@ export function Dashboard({ current, forecast, hourly, isLoading, isRefreshing, 
 
       <HourlyForecast hours={hourly} units={units} />
 
+      {(hourly.length > 0 || forecast.length > 0) && (
+        <div className="chart-tabs" role="tablist" aria-label="Forecast view">
+          <button
+            className="chart-tab"
+            role="tab"
+            aria-selected={activeTab === '5-day'}
+            aria-controls="panel-5day"
+            onClick={() => setActiveTab('5-day')}
+          >
+            5-Day
+          </button>
+          <button
+            className="chart-tab"
+            role="tab"
+            aria-selected={activeTab === 'hourly'}
+            aria-controls="panel-hourly"
+            onClick={() => setActiveTab('hourly')}
+          >
+            Hourly
+          </button>
+        </div>
+      )}
+
       <section className="charts-section" aria-label="Forecast Charts">
-        <div className="chart-container large">
-          <h2>Temperature Trend</h2>
-          <div className="chart-wrapper" role="img" aria-label={temperatureSummary(forecast, tempUnit(units))}>
-            {temperatureChartData && <Line data={temperatureChartData} options={chartOptions} />}
-          </div>
-          <table className="sr-only">
-            <caption>Temperature Trend Data</caption>
-            <thead><tr><th>Date</th><th>High</th><th>Low</th></tr></thead>
-            <tbody>
-              {forecast.map((d) => (
-                <tr key={d.date}><td>{d.date}</td><td>{convertTemp(d.tempHigh, units)}{tempUnit(units)}</td><td>{convertTemp(d.tempLow, units)}{tempUnit(units)}</td></tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="chart-row">
-          <div className="chart-container">
-            <h2>Conditions Distribution</h2>
-            <div className="chart-wrapper" role="img" aria-label={conditionsSummary(forecast)}>
-              {conditionsChartData && <Pie data={conditionsChartData} options={pieOptions} />}
+        {activeTab === '5-day' ? (
+          <div id="panel-5day" role="tabpanel">
+            <div className="chart-container large">
+              <h2>Temperature Trend</h2>
+              <div className="chart-wrapper" role="img" aria-label={temperatureSummary(forecast, tempUnit(units))}>
+                {temperatureChartData && <Line data={temperatureChartData} options={chartOptions} />}
+              </div>
+              <table className="sr-only">
+                <caption>Temperature Trend Data</caption>
+                <thead><tr><th>Date</th><th>High</th><th>Low</th></tr></thead>
+                <tbody>
+                  {forecast.map((d) => (
+                    <tr key={d.date}><td>{d.date}</td><td>{convertTemp(d.tempHigh, units)}{tempUnit(units)}</td><td>{convertTemp(d.tempLow, units)}{tempUnit(units)}</td></tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <table className="sr-only">
-              <caption>Conditions Distribution Data</caption>
-              <thead><tr><th>Date</th><th>Conditions</th></tr></thead>
-              <tbody>
-                {forecast.map((d) => (
-                  <tr key={d.date}><td>{d.date}</td><td>{d.conditions}</td></tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
 
-          <div className="chart-container">
-            <h2>Humidity Forecast</h2>
-            <div className="chart-wrapper" role="img" aria-label={humiditySummary(forecast)}>
-              {humidityChartData && <Bar data={humidityChartData} options={chartOptions} />}
+            <div className="chart-row">
+              <div className="chart-container">
+                <h2>Conditions Distribution</h2>
+                <div className="chart-wrapper" role="img" aria-label={conditionsSummary(forecast)}>
+                  {conditionsChartData && <Pie data={conditionsChartData} options={pieOptions} />}
+                </div>
+                <table className="sr-only">
+                  <caption>Conditions Distribution Data</caption>
+                  <thead><tr><th>Date</th><th>Conditions</th></tr></thead>
+                  <tbody>
+                    {forecast.map((d) => (
+                      <tr key={d.date}><td>{d.date}</td><td>{d.conditions}</td></tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="chart-container">
+                <h2>Humidity Forecast</h2>
+                <div className="chart-wrapper" role="img" aria-label={humiditySummary(forecast)}>
+                  {humidityChartData && <Bar data={humidityChartData} options={chartOptions} />}
+                </div>
+                <table className="sr-only">
+                  <caption>Humidity Forecast Data</caption>
+                  <thead><tr><th>Date</th><th>Humidity</th></tr></thead>
+                  <tbody>
+                    {forecast.map((d) => (
+                      <tr key={d.date}><td>{d.date}</td><td>{d.humidity}%</td></tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-            <table className="sr-only">
-              <caption>Humidity Forecast Data</caption>
-              <thead><tr><th>Date</th><th>Humidity</th></tr></thead>
-              <tbody>
-                {forecast.map((d) => (
-                  <tr key={d.date}><td>{d.date}</td><td>{d.humidity}%</td></tr>
-                ))}
-              </tbody>
-            </table>
           </div>
-        </div>
+        ) : (
+          <div id="panel-hourly" role="tabpanel">
+            <div className="chart-container large">
+              <h2>Hourly Temperature</h2>
+              <div className="chart-wrapper" role="img" aria-label={`Hourly temperature forecast for the next ${hourly.length} hours`}>
+                {hourlyChartData && <Line data={hourlyChartData} options={chartOptions} />}
+              </div>
+              <table className="sr-only">
+                <caption>Hourly Temperature Data</caption>
+                <thead><tr><th>Time</th><th>Temperature</th></tr></thead>
+                <tbody>
+                  {hourly.map((h) => (
+                    <tr key={h.time}><td>{h.time}</td><td>{convertTemp(h.temperature, units)}{tempUnit(units)}</td></tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </section>
 
       <section className="additional-info">

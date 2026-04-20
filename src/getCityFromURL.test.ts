@@ -1,32 +1,21 @@
-import { describe, it, expect, afterEach } from 'vitest'
-import { getCityFromURL } from './utils/cityUrl'
+import { describe, it, expect } from 'vitest'
+import { getCityById } from './utils/cityUrl'
 import { CITIES } from './types'
 
-function setURL(search: string) {
-  Object.defineProperty(window, 'location', {
-    value: { ...window.location, search },
-    writable: true,
-  })
-}
-
-describe('getCityFromURL', () => {
-  afterEach(() => setURL(''))
-
+describe('getCityById', () => {
   it('returns null city and null invalidId when no param', () => {
-    setURL('')
-    expect(getCityFromURL()).toEqual({ city: null, invalidId: null })
+    expect(getCityById()).toEqual({ city: null, invalidId: null })
+    expect(getCityById(undefined)).toEqual({ city: null, invalidId: null })
   })
 
-  it('returns the matching city when param is valid', () => {
-    setURL('?city=tokyo')
-    const result = getCityFromURL()
+  it('returns the matching city when id is valid', () => {
+    const result = getCityById('tokyo')
     expect(result.city).toEqual(CITIES.find((c) => c.id === 'tokyo'))
     expect(result.invalidId).toBeNull()
   })
 
-  it('returns null city and the raw id when param is invalid', () => {
-    setURL('?city=atlantis')
-    const result = getCityFromURL()
+  it('returns null city and the raw id when id is invalid', () => {
+    const result = getCityById('atlantis')
     expect(result.city).toBeNull()
     expect(result.invalidId).toBe('atlantis')
   })

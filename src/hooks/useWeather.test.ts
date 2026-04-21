@@ -252,6 +252,74 @@ describe('useWeather', () => {
       expect(mockedFetch.mock.calls.length).toBeGreaterThan(callsAfterMount)
     })
 
+    it('pauses interval when tab becomes hidden', async () => {
+      mockedFetch.mockResolvedValue(makeResult('Atlanta', 'US'))
+
+      const { result } = renderHook(() => useWeather(atlanta))
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
+      const callsAfterMount = mockedFetch.mock.calls.length
+
+      // Simulate tab becoming hidden
+      Object.defineProperty(document, 'hidden', { value: true, configurable: true })
+      document.dispatchEvent(new Event('visibilitychange'))
+
+      await act(async () => {
+        vi.advanceTimersByTime(REFRESH_INTERVAL * 2)
+      })
+
+      // No new fetches should have happened
+      expect(mockedFetch.mock.calls.length).toBe(callsAfterMount)
+
+      // Restore
+      Object.defineProperty(document, 'hidden', { value: false, configurable: true })
+    })
+
+    it('resumes fetching when tab becomes visible again', async () => {
+      mockedFetch.mockResolvedValue(makeResult('Atlanta', 'US'))
+
+      const { result } = renderHook(() => useWeather(atlanta))
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
+      // Hide the tab
+      Object.defineProperty(document, 'hidden', { value: true, configurable: true })
+      document.dispatchEvent(new Event('visibilitychange'))
+
+      // Make cache stale so fetchData actually calls fetchWeatherData on resume
+      const { getCache: getCacheEntry } = await import('../services/weatherCache')
+      const entry = getCacheEntry('atlanta')!
+      entry.timestamp = Date.now() - 11 * 60 * 1000
+
+      const callsWhileHidden = mockedFetch.mock.calls.length
+
+      // Show again — should trigger immediate network fetch (stale cache)
+      mockedFetch.mockResolvedValue(makeResult('Atlanta Refreshed', 'US'))
+      Object.defineProperty(document, 'hidden', { value: false, configurable: true })
+      document.dispatchEvent(new Event('visibilitychange'))
+
+      await waitFor(() => {
+        expect(mockedFetch.mock.calls.length).toBeGreaterThan(callsWhileHidden)
+      })
+
+      // Interval should also have restarted
+      const callsAfterResume = mockedFetch.mock.calls.length
+
+      await act(async () => {
+        vi.advanceTimersByTime(REFRESH_INTERVAL)
+      })
+
+      expect(mockedFetch.mock.calls.length).toBeGreaterThan(callsAfterResume)
+
+      // Restore
+      Object.defineProperty(document, 'hidden', { value: false, configurable: true })
+    })
+
     it('clears interval on unmount and prevents further fetches', async () => {
       mockedFetch.mockResolvedValue(makeResult('Atlanta', 'US'))
 

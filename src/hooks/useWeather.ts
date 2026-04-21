@@ -90,16 +90,34 @@ export function useWeather(city: City): UseWeatherResult {
   useEffect(() => {
     fetchData()
 
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
+    const startInterval = () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+      intervalRef.current = setInterval(() => fetchData(), REFRESH_INTERVAL)
     }
 
-    intervalRef.current = setInterval(() => fetchData(), REFRESH_INTERVAL)
-
-    return () => {
+    const stopInterval = () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
+        intervalRef.current = null
       }
+    }
+
+    startInterval()
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopInterval()
+      } else {
+        fetchData()
+        startInterval()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      stopInterval()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
       abortControllerRef.current?.abort()
     }
   }, [fetchData])

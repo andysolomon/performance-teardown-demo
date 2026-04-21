@@ -128,14 +128,7 @@ export function WeatherPanel({ isOpen, onClose, cityName, children }: WeatherPan
     const threshold = panelHeight * DISMISS_THRESHOLD
 
     if (translateY > threshold) {
-      // Dismiss
       handleClose()
-    } else if (translateY < -50 && !expanded) {
-      // Swipe up → expand
-      setExpanded(true)
-    } else if (translateY > 50 && expanded) {
-      // Swipe down from expanded → collapse to half
-      setExpanded(false)
     }
 
     setTranslateY(0)

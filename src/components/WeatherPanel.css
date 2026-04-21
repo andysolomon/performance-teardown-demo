@@ -109,23 +109,42 @@
   }
 }
 
-/* Mobile: bottom sheet */
+/* Mobile: full-height sheet */
 @media (max-width: 768px) {
   .weather-panel {
     left: 0;
     right: 0;
+    top: 0;
     bottom: 0;
-    height: 50vh;
-    border-radius: 16px 16px 0 0;
+    border-radius: 0;
     transform: translateY(100%);
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   .weather-panel.open {
     transform: translateY(0);
   }
 
-  .weather-panel.expanded {
-    height: 100vh;
+  .weather-panel-header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--bg);
+    padding-left: max(20px, env(safe-area-inset-left, 0px));
+    padding-right: max(20px, env(safe-area-inset-right, 0px));
+  }
+
+  .weather-panel-body {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  .weather-panel-close {
+    min-width: 44px;
+    min-height: 44px;
+    width: 44px;
+    height: 44px;
   }
 }
 

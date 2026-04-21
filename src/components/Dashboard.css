@@ -296,7 +296,33 @@
     font-size: 24px;
   }
 
+  .header-controls {
+    flex-wrap: wrap;
+  }
+
+  .chart-container {
+    padding: 16px;
+  }
+
+  .chart-wrapper {
+    height: 200px;
+  }
+
   .additional-info {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 375px) {
+  .dashboard {
+    padding: 12px;
+  }
+
+  .dashboard-header {
+    margin-bottom: 20px;
+  }
+
+  .chart-wrapper {
+    height: 180px;
   }
 }

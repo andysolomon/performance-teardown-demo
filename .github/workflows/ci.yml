@@ -25,6 +25,16 @@ jobs:
       - run: npx tsc --noEmit -p tsconfig.app.json
       - run: npm run test:run
       - run: npm run build
+
+      - name: Report bundle size
+        run: |
+          echo "## Bundle size" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          du -sh dist/ >> "$GITHUB_STEP_SUMMARY"
+          du -sh dist/assets/*.js >> "$GITHUB_STEP_SUMMARY"
+          du -sh dist/assets/*.css >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test --project=chromium
         env:

@@ -55,13 +55,27 @@ export function WeatherPanel({ isOpen, onClose, cityName, children }: WeatherPan
     }
   }, [isOpen])
 
-  // Focus restore on close
+  // Focus restore on close — deferred until the slide-out transition ends
   const handleClose = useCallback(() => {
     const elToRestore = previousFocusRef.current
+    const panel = panelRef.current
     onClose()
-    requestAnimationFrame(() => {
+
+    if (panel) {
+      const restore = () => {
+        clearTimeout(fallback)
+        panel.removeEventListener('transitionend', onEnd)
+        elToRestore?.focus()
+      }
+      const onEnd = (e: TransitionEvent) => {
+        if (e.target === panel) restore()
+      }
+      panel.addEventListener('transitionend', onEnd)
+      // Fallback in case transitionend never fires (e.g. prefers-reduced-motion)
+      const fallback = setTimeout(restore, 400)
+    } else {
       elToRestore?.focus()
-    })
+    }
   }, [onClose])
 
   // Escape key + focus trap

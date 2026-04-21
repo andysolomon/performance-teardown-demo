@@ -80,6 +80,7 @@ describe('WeatherPanel', () => {
       })
 
       // Close via close button
+      const panel = screen.getByRole('dialog')
       fireEvent.click(screen.getByRole('button', { name: 'Close panel' }))
       expect(onClose).toHaveBeenCalled()
 
@@ -89,9 +90,8 @@ describe('WeatherPanel', () => {
         </WeatherPanel>
       )
 
-      await act(async () => {
-        await new Promise((r) => requestAnimationFrame(r))
-      })
+      // Simulate the CSS transition completing on the panel element
+      fireEvent.transitionEnd(panel, { target: panel })
 
       expect(document.activeElement).toBe(triggerBtn)
 

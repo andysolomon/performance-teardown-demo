@@ -19,7 +19,7 @@ import { HourlyForecast } from './HourlyForecast'
 import { CityPicker } from './CityPicker'
 import { UnitToggle } from './UnitToggle'
 import { PanelSkeleton } from './PanelSkeleton'
-import { getStoredUnits, setStoredUnits, convertTemp, convertWindSpeed, convertVisibility, tempUnit, speedUnit, distanceUnit, type UnitSystem } from '../utils/units'
+import { getStoredUnits, setStoredUnits, convertTemp, convertWindSpeed, convertVisibility, convertPrecipitation, tempUnit, speedUnit, distanceUnit, precipitationUnit, formatDaylight, degreesToCompass, type UnitSystem } from '../utils/units'
 import { temperatureSummary, conditionsSummary, humiditySummary } from '../utils/chartSummaries'
 import './Dashboard.css'
 
@@ -432,12 +432,32 @@ export function Dashboard({ current, forecast, hourly, isLoading, isRefreshing, 
           <span className="info-value">{current.sunset}</span>
         </div>
         <div className="info-item">
+          <span className="info-label">Daylight</span>
+          <span className="info-value">{current.daylightDuration != null ? formatDaylight(current.daylightDuration) : 'Unavailable'}</span>
+        </div>
+        <div className="info-item">
           <span className="info-label">Visibility</span>
           <span className="info-value">{current.visibility != null ? `${convertVisibility(current.visibility, units)} ${distanceUnit(units)}` : 'Unavailable'}</span>
         </div>
         <div className="info-item">
           <span className="info-label">Pressure</span>
           <span className="info-value">{current.pressure} hPa</span>
+        </div>
+        <div className="info-item">
+          <span className="info-label">Wind Direction</span>
+          <span className="info-value">
+            {current.windDirection != null ? `${degreesToCompass(current.windDirection)} (${current.windDirection}°)` : 'Unavailable'}
+          </span>
+        </div>
+        <div className="info-item">
+          <span className="info-label">Precipitation</span>
+          <span className="info-value">
+            {current.precipitation != null ? `${convertPrecipitation(current.precipitation, units)} ${precipitationUnit(units)}` : 'Unavailable'}
+          </span>
+        </div>
+        <div className="info-item">
+          <span className="info-label">Precip. Chance</span>
+          <span className="info-value">{current.precipitationChance != null ? `${current.precipitationChance}%` : 'Unavailable'}</span>
         </div>
       </section>
     </div>

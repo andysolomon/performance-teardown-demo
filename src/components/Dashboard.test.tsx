@@ -194,6 +194,86 @@ describe('Dashboard', () => {
     expect(screen.getByText('Sunset')).toBeInTheDocument()
     expect(screen.getByText('Visibility')).toBeInTheDocument()
     expect(screen.getByText('Pressure')).toBeInTheDocument()
+    expect(screen.getByText('Wind Direction')).toBeInTheDocument()
+    expect(screen.getByText('Daylight')).toBeInTheDocument()
+    expect(screen.getByText('Precipitation')).toBeInTheDocument()
+    expect(screen.getByText('Precip. Chance')).toBeInTheDocument()
+  })
+
+  it('renders wind direction with compass label and degrees', () => {
+    render(
+      <Dashboard
+        current={{ ...mockCurrent, windDirection: 180 }}
+        forecast={mockForecast}
+        hourly={[]}
+        isLoading={false}
+        isRefreshing={false}
+        isStale={false}
+        error={null}
+        source="open-meteo"
+        onRetry={vi.fn()}
+        city={DEFAULT_CITY}
+        onCityChange={vi.fn()}
+      />
+    )
+
+    expect(screen.getByText(/S \(180°\)/)).toBeInTheDocument()
+  })
+
+  it('renders precipitation amount, chance, and daylight when provided', () => {
+    render(
+      <Dashboard
+        current={{
+          ...mockCurrent,
+          precipitation: 2.5,
+          precipitationChance: 73,
+          daylightDuration: 12 * 3600 + 30 * 60,
+        }}
+        forecast={mockForecast}
+        hourly={[]}
+        isLoading={false}
+        isRefreshing={false}
+        isStale={false}
+        error={null}
+        source="open-meteo"
+        onRetry={vi.fn()}
+        city={DEFAULT_CITY}
+        onCityChange={vi.fn()}
+      />
+    )
+
+    // Imperial default: 2.5 mm → 0.1 in
+    expect(screen.getByText(/0\.1 in/)).toBeInTheDocument()
+    expect(screen.getByText(/73%/)).toBeInTheDocument()
+    expect(screen.getByText(/12h 30m/)).toBeInTheDocument()
+  })
+
+  it('shows Unavailable when optional details are missing', () => {
+    const sparse: typeof mockCurrent = {
+      ...mockCurrent,
+      windDirection: undefined,
+      precipitation: undefined,
+      precipitationChance: undefined,
+      daylightDuration: undefined,
+      visibility: undefined,
+    }
+    render(
+      <Dashboard
+        current={sparse}
+        forecast={mockForecast}
+        hourly={[]}
+        isLoading={false}
+        isRefreshing={false}
+        isStale={false}
+        error={null}
+        source="open-meteo"
+        onRetry={vi.fn()}
+        city={DEFAULT_CITY}
+        onCityChange={vi.fn()}
+      />
+    )
+
+    expect(screen.getAllByText('Unavailable').length).toBeGreaterThanOrEqual(5)
   })
 
   it('renders unit toggle in header', () => {

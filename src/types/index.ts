@@ -157,6 +157,9 @@ export interface WeatherData {
   windDirection?: number
   uvIndex?: number
   visibility?: number
+  precipitation?: number
+  precipitationChance?: number
+  daylightDuration?: number
   conditions: string
   conditionIcon: string
   sunrise: string

@@ -83,6 +83,7 @@ describe('fetchOpenMeteoWeather', () => {
       wind_direction_10m: 225.4,
       visibility: 24140,
       uv_index: 5.3,
+      precipitation: 1.27,
     },
     daily: {
       time: ['2024-03-13', '2024-03-14', '2024-03-15', '2024-03-16', '2024-03-17', '2024-03-18'],
@@ -92,6 +93,8 @@ describe('fetchOpenMeteoWeather', () => {
       relative_humidity_2m_mean: [60, 55, 70, 65, 58, 62],
       sunrise: ['2024-03-13T06:30', '2024-03-14T06:29', '2024-03-15T06:28', '2024-03-16T06:27', '2024-03-17T06:26', '2024-03-18T06:25'],
       sunset: ['2024-03-13T19:45', '2024-03-14T19:46', '2024-03-15T19:47', '2024-03-16T19:48', '2024-03-17T19:49', '2024-03-18T19:50'],
+      precipitation_probability_max: [60, 40, 80, 20, 10, 5],
+      daylight_duration: [45000, 45100, 45200, 45300, 45400, 45500],
     },
     hourly: {
       time: Array.from({ length: 168 }, (_, i) => {
@@ -136,9 +139,35 @@ describe('fetchOpenMeteoWeather', () => {
     expect(result.current.uvIndex).toBe(5.3)
     expect(result.current.sunrise).toBe('6:30 AM')
     expect(result.current.sunset).toBe('7:45 PM')
+    expect(result.current.precipitation).toBe(1.3)
+    expect(result.current.precipitationChance).toBe(60)
+    expect(result.current.daylightDuration).toBe(45000)
     expect(result.forecast).toHaveLength(5)
     expect(result.forecast[0].conditions).toBe('Clear')
     expect(result.forecast[2].conditions).toBe('Rain')
+  })
+
+  it('returns undefined precipitation/daylight when daily arrays are absent', async () => {
+    const responseWithoutDailyExtras = {
+      ...mockOpenMeteoResponse,
+      current: { ...mockOpenMeteoResponse.current, precipitation: undefined },
+      daily: {
+        ...mockOpenMeteoResponse.daily,
+        precipitation_probability_max: undefined,
+        daylight_duration: undefined,
+      },
+    }
+
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(responseWithoutDailyExtras),
+    })
+
+    const result = await fetchOpenMeteoWeather(testCity)
+
+    expect(result.current.precipitation).toBeUndefined()
+    expect(result.current.precipitationChance).toBeUndefined()
+    expect(result.current.daylightDuration).toBeUndefined()
   })
 
   it('throws network error on non-ok response', async () => {

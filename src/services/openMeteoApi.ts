@@ -69,6 +69,7 @@ interface OpenMeteoResponse {
     wind_direction_10m?: number
     visibility?: number
     uv_index?: number
+    precipitation?: number
   }
   daily: {
     time: string[]
@@ -78,6 +79,8 @@ interface OpenMeteoResponse {
     relative_humidity_2m_mean: number[]
     sunrise: string[]
     sunset: string[]
+    precipitation_probability_max?: number[]
+    daylight_duration?: number[]
   }
   hourly: {
     time: string[]
@@ -99,7 +102,7 @@ function formatHour(isoDateTime: string): string {
 
 export async function fetchOpenMeteoWeather(city: City, signal?: AbortSignal): Promise<{ current: WeatherData; forecast: ForecastDay[]; hourly: HourlyForecast[] }> {
   try {
-    const url = `${BASE_URL}/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,pressure_msl,apparent_temperature,wind_direction_10m,visibility,uv_index&hourly=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,sunrise,sunset&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`
+    const url = `${BASE_URL}/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,pressure_msl,apparent_temperature,wind_direction_10m,visibility,uv_index,precipitation&hourly=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,sunrise,sunset,precipitation_probability_max,daylight_duration&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`
 
     const timeoutSignal = AbortSignal.timeout(10_000)
     const composedSignal = signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal
@@ -116,6 +119,13 @@ export async function fetchOpenMeteoWeather(city: City, signal?: AbortSignal): P
     const feelsLike = data.current.apparent_temperature != null ? Math.round(data.current.apparent_temperature) : undefined
     const windDirection = data.current.wind_direction_10m != null ? Math.round(data.current.wind_direction_10m) : undefined
     const visibility = data.current.visibility != null ? Math.round(data.current.visibility / 1609) : undefined
+    const precipitation = data.current.precipitation != null ? Math.round(data.current.precipitation * 10) / 10 : undefined
+    const precipitationChance = data.daily.precipitation_probability_max?.[0] != null
+      ? Math.round(data.daily.precipitation_probability_max[0])
+      : undefined
+    const daylightDuration = data.daily.daylight_duration?.[0] != null
+      ? Math.round(data.daily.daylight_duration[0])
+      : undefined
 
     const current: WeatherData = {
       location: `${city.name}, ${city.country}`,
@@ -127,6 +137,9 @@ export async function fetchOpenMeteoWeather(city: City, signal?: AbortSignal): P
       ...(windDirection !== undefined && { windDirection }),
       ...(uvIndex !== undefined && { uvIndex }),
       ...(visibility !== undefined && { visibility }),
+      ...(precipitation !== undefined && { precipitation }),
+      ...(precipitationChance !== undefined && { precipitationChance }),
+      ...(daylightDuration !== undefined && { daylightDuration }),
       conditions: getConditionFromCode(data.current.weather_code),
       conditionIcon: '01d',
       sunrise: formatTimeFromIso(data.daily.sunrise[0] || ''),

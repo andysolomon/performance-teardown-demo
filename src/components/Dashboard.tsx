@@ -19,6 +19,7 @@ import { HourlyForecast } from './HourlyForecast'
 import { CityPicker } from './CityPicker'
 import { UnitToggle } from './UnitToggle'
 import { PanelSkeleton } from './PanelSkeleton'
+import { CityHero } from './CityHero'
 import { getStoredUnits, setStoredUnits, convertTemp, convertWindSpeed, convertVisibility, convertPrecipitation, tempUnit, speedUnit, distanceUnit, precipitationUnit, formatDaylight, degreesToCompass, type UnitSystem } from '../utils/units'
 import { temperatureSummary, conditionsSummary, humiditySummary } from '../utils/chartSummaries'
 import './Dashboard.css'
@@ -296,6 +297,7 @@ export function Dashboard({ current, forecast, hourly, isLoading, isRefreshing, 
 
   return (
     <div className="dashboard">
+      <CityHero city={city} />
       <header className="dashboard-header">
         <div className="header-row">
           <div className="header-controls">

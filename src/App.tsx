@@ -5,6 +5,7 @@ import { WeatherPanel } from './components/WeatherPanel'
 import { InvalidCityView } from './components/InvalidCityView'
 import { PanelSkeleton } from './components/PanelSkeleton'
 import { useWeather } from './hooks/useWeather'
+import { useStatusAnnouncement } from './hooks/useStatusAnnouncement'
 import { CITIES, DEFAULT_CITY, type City } from './types'
 import { getCityById } from './utils/cityUrl'
 import './App.css'
@@ -37,11 +38,20 @@ function App() {
     setInvalidCityId(invalidId)
   }, [cityId])
 
-  const announcement = useMemo(() => selectedCity ? `${selectedCity.name} selected, weather panel opened` : '', [selectedCity])
   const markerRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const lastSelectedRef = useRef<string | null>(null)
   const activeCity = selectedCity ?? DEFAULT_CITY
   const { current, forecast, hourly, isLoading, isRefreshing, isStale, error, source, refetch } = useWeather(activeCity)
+
+  // Announce loading / error / refresh / stale status changes for assistive tech
+  const [announcement, setAnnouncement] = useStatusAnnouncement({ isLoading, isRefreshing, isStale, error })
+
+  // Announce city selection (overrides current status announcement)
+  useEffect(() => {
+    if (selectedCity) {
+      setAnnouncement(`${selectedCity.name} selected, weather panel opened`)
+    }
+  }, [selectedCity, setAnnouncement])
 
   const selectCity = useCallback((city: City | null) => {
     setSelectedCity(city)

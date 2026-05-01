@@ -20,6 +20,8 @@ import { CityPicker } from './CityPicker'
 import { UnitToggle } from './UnitToggle'
 import { PanelSkeleton } from './PanelSkeleton'
 import { CityHero } from './CityHero'
+import { WeatherAlerts } from './WeatherAlerts'
+import { deriveAlerts } from '../services/weatherAlerts'
 import { getStoredUnits, setStoredUnits, convertTemp, convertWindSpeed, convertVisibility, convertPrecipitation, tempUnit, speedUnit, distanceUnit, precipitationUnit, formatDaylight, degreesToCompass, type UnitSystem } from '../utils/units'
 import { temperatureSummary, conditionsSummary, humiditySummary } from '../utils/chartSummaries'
 import './Dashboard.css'
@@ -178,6 +180,8 @@ export function Dashboard({ current, forecast, hourly, isLoading, isRefreshing, 
     return items
   }, [current, units])
 
+  const alerts = useMemo(() => deriveAlerts(current, forecast), [current, forecast])
+
   const temperatureChartData: ChartData | null = useMemo(() => {
     if (forecast.length === 0) return null
     return {
@@ -318,6 +322,8 @@ export function Dashboard({ current, forecast, hourly, isLoading, isRefreshing, 
           {current.conditions}{current.feelsLike != null ? ` • Feels like ${convertTemp(current.feelsLike, units)}${tempUnit(units)}` : ''}
         </p>
       </header>
+
+      <WeatherAlerts alerts={alerts} />
 
       <section className="metrics-grid" aria-label="Current Conditions">
         {metrics.map((metric) => (

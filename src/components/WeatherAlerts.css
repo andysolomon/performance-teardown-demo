@@ -1,0 +1,116 @@
+.weather-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.weather-alert {
+  background: var(--card-bg, var(--bg));
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 12px;
+  padding: 12px 16px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.weather-alert.severity-severe {
+  border-left-color: #dc2626; /* red-600 */
+  background: rgba(220, 38, 38, 0.06);
+}
+
+.weather-alert.severity-warning {
+  border-left-color: #d97706; /* amber-600 */
+  background: rgba(217, 119, 6, 0.06);
+}
+
+.weather-alert.severity-info {
+  border-left-color: #2563eb; /* blue-600 */
+  background: rgba(37, 99, 235, 0.06);
+}
+
+.weather-alert-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 14px;
+  color: var(--text-h);
+}
+
+.weather-alert-summary::-webkit-details-marker {
+  display: none;
+}
+
+.weather-alert-summary::before {
+  content: '▸';
+  display: inline-block;
+  font-size: 12px;
+  transition: transform 0.15s;
+  width: 12px;
+  text-align: center;
+  color: var(--text);
+}
+
+.weather-alert[open] > .weather-alert-summary::before {
+  transform: rotate(90deg);
+}
+
+.weather-alert-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: white;
+}
+
+.weather-alert-badge.severity-severe {
+  background: #dc2626;
+}
+
+.weather-alert-badge.severity-warning {
+  background: #d97706;
+}
+
+.weather-alert-badge.severity-info {
+  background: #2563eb;
+}
+
+.weather-alert-title {
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+}
+
+.weather-alert-source {
+  font-size: 11px;
+  color: var(--text);
+  opacity: 0.7;
+  border: 1px solid var(--border);
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.weather-alert-description {
+  margin: 12px 0 0;
+  padding-left: 22px;
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .weather-alert-summary::before {
+    transition: none;
+  }
+
+  .weather-alert {
+    transition: none;
+  }
+}

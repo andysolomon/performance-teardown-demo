@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect, useMemo, useRef, lazy, Suspense } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
-import { MapView } from './components/MapView'
 import { WeatherPanel } from './components/WeatherPanel'
 import { InvalidCityView } from './components/InvalidCityView'
 import { PanelSkeleton } from './components/PanelSkeleton'
+import { MapSkeleton } from './components/MapSkeleton'
 import { useWeather } from './hooks/useWeather'
 import { useStatusAnnouncement } from './hooks/useStatusAnnouncement'
 import { CITIES, DEFAULT_CITY, type City } from './types'
@@ -11,6 +11,7 @@ import { getCityById } from './utils/cityUrl'
 import './App.css'
 
 const Dashboard = lazy(() => import('./components/Dashboard').then((m) => ({ default: m.Dashboard })))
+const MapView = lazy(() => import('./components/MapView').then((m) => ({ default: m.MapView })))
 
 function App() {
   const { cityId } = useParams<{ cityId?: string }>()
@@ -80,12 +81,14 @@ function App() {
 
   return (
     <>
-      <MapView
-        selectedCityId={selectedCity?.id ?? null}
-        onCitySelect={handleCitySelect}
-        onDeselect={handlePanelClose}
-        markerRefs={markerRefs}
-      />
+      <Suspense fallback={<MapSkeleton />}>
+        <MapView
+          selectedCityId={selectedCity?.id ?? null}
+          onCitySelect={handleCitySelect}
+          onDeselect={handlePanelClose}
+          markerRefs={markerRefs}
+        />
+      </Suspense>
       <WeatherPanel
         isOpen={selectedCity !== null || invalidCityId !== null}
         onClose={handlePanelClose}

@@ -1,0 +1,41 @@
+.map-skeleton {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.06), transparent 50%),
+    linear-gradient(180deg, #1a3c6e 0%, #2563a8 60%, #3b82d4 100%);
+  overflow: hidden;
+}
+
+.map-skeleton-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.04) 50%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+  animation: map-skeleton-shimmer 2.4s linear infinite;
+}
+
+@keyframes map-skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (prefers-color-scheme: dark) {
+  .map-skeleton {
+    background:
+      radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.04), transparent 50%),
+      linear-gradient(180deg, #0f1d36 0%, #142a52 60%, #1d3a72 100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-skeleton-shimmer {
+    animation: none;
+  }
+}

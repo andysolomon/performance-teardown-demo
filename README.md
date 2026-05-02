@@ -9,14 +9,17 @@ An interactive weather dashboard built with React 19 and Mapbox GL. Select citie
 
 ## Features
 
-- 🌍 **Interactive Mapbox globe** — full-screen map with custom-styled land, water, and boundaries
+- 🌍 **Interactive Mapbox globe** — full-screen map with custom-styled land, water, and boundaries (lazy-loaded so the engine never blocks first paint)
 - 📍 **10 city markers** — keyboard-navigable pins with pulse animation on selection
-- 🌤️ **Real-time weather** — current conditions via Open-Meteo (free, no key required)
-- 📊 **5-day forecast charts** — temperature trends and daily breakdowns with Chart.js
-- 🌡️ **Unit toggle** — switch between °F/°C and mph/km/h
+- 🌤️ **Real-time weather** — current conditions via Open-Meteo (free, no key required) with OpenWeatherMap and offline mock fallbacks
+- 📊 **Hourly + 5-day forecast charts** — Chart.js visuals with `<table class="sr-only">` data tables for screen readers
+- 🌡️ **Rich location details** — feels-like, sunrise/sunset, daylight duration, compass wind direction, visibility, pressure, precipitation amount and chance (each with an "Unavailable" fallback)
+- 🚨 **Derived weather advisories** — client-side severity-coloured banners (severe / warning / info) computed from the existing payload, clearly labelled "Derived advisory"
+- 🖼️ **City hero banner** — lazy-loaded location image with dark gradient overlay, fixed-height container avoids CLS, errors fall back silently
+- 🌗 **Unit toggle** — switch between °F/°C and mph/km/h, persisted in localStorage
 - 📱 **Responsive bottom sheet** — swipe-to-dismiss panel on mobile with touch gestures
-- ♿ **Accessible** — ARIA labels, keyboard navigation, focus management, live regions
-- 🔗 **URL sync** — shareable city links via `?city=<id>` query params
+- ♿ **Accessible** — ARIA labels, keyboard navigation, focus management, and an `aria-live` region announcing loading / refreshing / stale / error transitions
+- 🔗 **URL sync** — shareable city links via `/city/:cityId` (legacy `?city=<id>` redirects)
 - 🔄 **Offline fallback** — graceful degradation with mock data when APIs are unavailable
 
 ## Tech Stack

@@ -1,7 +1,7 @@
 Project: performance-teardown-demo
-Status: COMPLETE
+Status: COMPLETE (with ongoing iteration)
 
-Last Updated: 2026-03-12 15:48 EDT
+Last Updated: 2026-05-01 EDT
 
 Milestones
 [x] M1 - Project scaffold (Vite + React + TS)
@@ -9,9 +9,12 @@ Milestones
 [x] M3 - Quality checks (lint/typecheck/tests)
 [x] M4 - Vercel deploy
 [x] M5 - Portfolio case-study update
+[x] M6 - Feature surface expansion (rich details, city hero, derived advisories, a11y status)
+[x] M7 - Performance teardown: lazy-load Mapbox + MapView CSS off the critical path
+[x] M8 - Case-study refresh (CASE_STUDY.md, README, progress) post M6/M7
 
 Current Task
-- Project complete.
+- Project complete; documentation refreshed to match current feature set and bundle profile.
 
 Blockers
 - [NONE]
@@ -19,11 +22,19 @@ Blockers
 Notes
 - Live URL: https://performance-teardown-demo.vercel.app
 - Case Study: CASE_STUDY.md
-- Tests: 6 passing (Vitest + React Testing Library)
-- Bundle: 127.17 KB gzipped
+- Tests: 242 passing across 21 Vitest files (Vitest + React Testing Library)
+- Eager bundle: 239 kB raw / 77 kB gzipped (index-*.js)
+- Lazy chunks: Dashboard 208 kB / 71 kB gz, MapView 22 kB / 8 kB gz, mapbox-gl 1,666 kB / 452 kB gz
+- ~470 kB gzipped of JS+CSS removed from the LCP critical path via React.lazy + MapSkeleton
 
 Change Log
-- [2026-03-12 15:48 EDT] Created CASE_STUDY.md for portfolio use. All milestones complete.
+- [2026-05-01] Refreshed CASE_STUDY.md and README.md to reflect the current feature surface (rich details, city hero, derived advisories, a11y status announcements) and the lazy-Mapbox perf win. Updated progress notes accordingly.
+- [Earlier this cycle] PR #78 — lazy-load Mapbox + MapView CSS via React.lazy + MapSkeleton.
+- [Earlier this cycle] PR #76 — derived weather advisories with severity banners.
+- [Earlier this cycle] PR #75 — city hero banners with lazy image + gradient overlay.
+- [Earlier this cycle] PR #74 — richer current-conditions details with graceful "Unavailable" fallbacks.
+- [Earlier this cycle] PR #73 — aria-live status announcements via useStatusAnnouncement hook.
+- [2026-03-12 15:48 EDT] Created CASE_STUDY.md for portfolio use. All initial milestones complete.
 - [2026-03-12 15:46 EDT] Deployed to Vercel (production).
 - [2026-03-12 15:45 EDT] Completed M2 and M3 - Dashboard with Chart.js, Vitest tests passing.
 - [2026-03-12 15:21 EDT] Scaffolded repository and initialized tracker.
